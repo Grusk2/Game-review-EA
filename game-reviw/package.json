@@ -1,6 +1,7 @@
 {
   "name": "game-reviw",
   "version": "0.1.0",
+  "proxy": "https://api.rawg.io",
   "private": true,
   "scripts": {
     "dev": "next dev",
