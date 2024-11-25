@@ -4,13 +4,10 @@ export default function Footer() {
         <footer className="bg-black text-white py-4 px-8">
           <div className="flex justify-between">
             <div>
-              {/* Logo or Company Name */}
               <p className="font-bold">GameLens</p>
-              {/* Copyright Information */}
               <p>&copy; 2023 GameLens. All rights reserved.</p>
             </div>
             <div>
-              {/* Social Media Links */}
               <ul className="flex gap-4">
                 <li>
                   <a href="#" target="_blank" rel="noopener noreferrer">
@@ -32,7 +29,7 @@ export default function Footer() {
                     <img 
                         src="/GameLens.png" 
                         alt="Logo" 
-                        className="h-10" // Adjust height as needed
+                        className="h-10"
                     />
                 </div>
               </ul>
