@@ -15,7 +15,8 @@ async function fetchGameDetails(id: string) {
 }
 
 export default async function GameDetails({ params }: GameDetailsProps) {
-  const game = await fetchGameDetails(params.id);
+  const { id } = params;
+  const game = await fetchGameDetails(id);
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -27,7 +28,7 @@ export default async function GameDetails({ params }: GameDetailsProps) {
         />
       </div>
       <h1 className="text-3xl font-bold mb-4">{game.name}</h1>
-      <p className="text-gray-700 mb-4">{game.description_raw}</p>
+      <p className="text-gray-700 mb-4">{game.description_raw || "No description available."}</p>
       <div className="flex flex-wrap gap-4 mb-6">
         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded">
           Released: {game.released}
@@ -39,3 +40,4 @@ export default async function GameDetails({ params }: GameDetailsProps) {
     </div>
   );
 }
+

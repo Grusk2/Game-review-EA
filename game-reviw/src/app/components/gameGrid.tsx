@@ -28,8 +28,9 @@ function GameGrid() {
       }
 
       const response = await fetch(
-        `https://api.rawg.io/api/games?key=3a05e794adaf449aa9c3e347c10065fb&page=${pageNumber}`
+        `https://api.rawg.io/api/games?key=${process.env.NEXT_PUBLIC_RAWG_API_KEY}&page=${pageNumber}`
       );
+      
       const data = await response.json();
 
       const formattedGames = data.results.map((game: any) => ({
