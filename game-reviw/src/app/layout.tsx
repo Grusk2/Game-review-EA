@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { AuthProvider } from "../app/context/AuthContext";
 import Header from "../app/components/header"
+import { Toaster } from 'react-hot-toast';
 import Footer from "../app/components/footer"
 import localFont from "next/font/local";
 import "./globals.css";
@@ -28,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <Toaster />
         <Header />
         {children}
         <Footer />

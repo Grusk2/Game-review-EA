@@ -1,43 +1,59 @@
-import React from "react";
+"use client";
 
-interface GameDetailsProps {
-  params: { id: string };
-}
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 
-async function fetchGameDetails(id: string) {
-  const res = await fetch(
-    `https://api.rawg.io/api/games/${id}?key=3a05e794adaf449aa9c3e347c10065fb`
-  );
-  if (!res.ok) {
-    throw new Error("Failed to fetch game details");
+const GameDetails = () => {
+  const { id } = useParams();
+  const [game, setGame] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGameDetails = async () => {
+      try {
+        const response = await fetch(
+          `https://api.rawg.io/api/games/${id}?key=${process.env.NEXT_PUBLIC_RAWG_API_KEY}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch game details.");
+        }
+
+        const data = await response.json();
+        setGame(data);
+      } catch (error) {
+        console.error("Error fetching game details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchGameDetails();
+    }
+  }, [id]);
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
-  return res.json();
-}
 
-export default async function GameDetails({ params }: GameDetailsProps) {
-  const { id } = params;
-  const game = await fetchGameDetails(id);
+  if (!game) {
+    return <div>Game not found.</div>;
+  }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="relative w-full h-64 md:h-96 mb-8">
-        <img
-          src={game.background_image}
-          alt={game.name}
-          className="absolute inset-0 w-full h-full object-cover rounded-lg"
-        />
+    <div className="p-8">
+      <h1 className="text-3xl font-bold">{game.name}</h1>
+      <img src={game.background_image} alt={game.name} className="w-full mt-4" />
+      <p className="mt-4">{game.description_raw || "No description available."}</p>
+      <div className="mt-4">
+        <strong>Platforms:</strong> {game.platforms.map((p: any) => p.platform.name).join(", ")}
       </div>
-      <h1 className="text-3xl font-bold mb-4">{game.name}</h1>
-      <p className="text-gray-700 mb-4">{game.description_raw || "No description available."}</p>
-      <div className="flex flex-wrap gap-4 mb-6">
-        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded">
-          Released: {game.released}
-        </span>
-        <span className="px-3 py-1 bg-green-100 text-green-800 rounded">
-          Rating: {game.rating}/5
-        </span>
+      <div className="mt-2">
+        <strong>Rating:</strong> {game.rating}
       </div>
     </div>
   );
-}
+};
 
+export default GameDetails;

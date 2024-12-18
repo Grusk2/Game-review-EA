@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import GameCard from "../components/gameCard";
 import GameCardPlaceholder from "../components/gameCardPlaceholder";
+import { auth, db } from "../utils/firebase";
+import { collection, doc, setDoc } from "firebase/firestore";
+import toast from "react-hot-toast";
 
 interface Game {
   id: number;
@@ -10,6 +13,7 @@ interface Game {
   imageUrl: string;
   description: string;
   rating: number;
+  platforms: string[];
 }
 
 function GameGrid() {
@@ -18,6 +22,8 @@ function GameGrid() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  
+  const userId = auth.currentUser?.uid;
 
   const fetchData = async (pageNumber: number) => {
     try {
@@ -30,7 +36,7 @@ function GameGrid() {
       const response = await fetch(
         `https://api.rawg.io/api/games?key=${process.env.NEXT_PUBLIC_RAWG_API_KEY}&page=${pageNumber}`
       );
-      
+
       const data = await response.json();
 
       const formattedGames = data.results.map((game: any) => ({
@@ -53,9 +59,29 @@ function GameGrid() {
     }
   };
 
-  useEffect(() => {
-    fetchData(page); 
-  }, [page]);
+  const handleAddToLibrary = async (game: Game) => {
+    if (!userId) {
+      toast.error("You need to be logged in to add a game to your library.");
+      return;
+    }
+
+    try {
+      const libraryRef = doc(db, "users", userId, "library", game.id.toString());
+
+      await setDoc(libraryRef, {
+        title: game.title,
+        imageUrl: game.imageUrl,
+        description: game.description,
+        platforms: game.platforms,
+        rating: game.rating,
+      });
+
+      toast.success(`${game.title} added to your library!`);
+    } catch (error) {
+      console.error("Error adding game to library:", error);
+      toast.error("There was an issue adding the game to your library.");
+    }
+  };
 
   const handleLoadMore = () => {
     if (hasMore && !isFetchingMore) {
@@ -63,6 +89,10 @@ function GameGrid() {
       setPage(nextPage);
     }
   };
+
+  useEffect(() => {
+    fetchData(page);
+  }, [page]);
 
   return (
     <div className="pt-20 pl-80 pr-80">
@@ -72,9 +102,20 @@ function GameGrid() {
             <GameCardPlaceholder key={index} />
           ))
         ) : (
-          games.map((game) => <GameCard key={game.id} game={game} />)
+          games.map((game) => (
+            <div key={game.id} className="relative">
+              <GameCard game={game} />
+              <button
+                onClick={() => handleAddToLibrary(game)}
+                className="absolute bottom-2 right-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              >
+                +
+              </button>
+            </div>
+          ))
         )}
       </div>
+
       {hasMore && !isLoading && (
         <div className="text-center mt-8">
           <button

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface Game {
   id: number;
@@ -9,6 +10,16 @@ interface Game {
 }
 
 function GameCard({ game }: { game: Game }) {
+  const [isClient, setIsClient] = useState(false); 
+
+  useEffect(() => {
+    setIsClient(true); 
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
+
   return (
     <div className="game-card bg-white rounded-lg overflow-hidden shadow-md flex flex-col hover:shadow-lg transition-shadow duration-200">
       <Link href={`/game/${game.id}`}>

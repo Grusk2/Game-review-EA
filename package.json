@@ -1,5 +1,12 @@
 {
   "dependencies": {
-    "react-router-dom": "^7.0.1"
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "firebase": "^11.0.2",
+    "next": "^15.0.3",
+    "next-auth": "^4.24.10",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^7.0.1",
+    "typescript": "^5.7.2"
   }
 }
