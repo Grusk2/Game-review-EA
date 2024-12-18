@@ -2,13 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../../utils/firebase";
+import StarRating from "../../components/starRating";
 
 const GameDetails = () => {
   const { id } = useParams();
   const [game, setGame] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showMore, setShowMore] = useState(false); // For showing more platforms
+  const [userId, setUserId] = useState<string | null>(null); // Authentication state
+  const [showMore, setShowMore] = useState(false); // Toggle for platforms' visibility
 
+  /** Auth state listener */
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid); // Save authenticated user's ID
+      } else {
+        setUserId(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  /** Fetch game details from RAWG API */
   useEffect(() => {
     const fetchGameDetails = async () => {
       try {
@@ -44,16 +62,16 @@ const GameDetails = () => {
         <img
           src={game.background_image}
           alt={game.name}
-          className="w-full h-[400px] object-cover"
+          className="w-full h-[400px] object-cover object-top rounded-lg"
         />
-        <div className="absolute bottom-0 bg-gradient-to-t from-black to-transparent w-full p-4">
+        <div className="absolute bottom-0 bg-gradient-to-t from-black to-transparent w-full p-4 rounded-lg">
           <h1 className="text-4xl font-bold">{game.name}</h1>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex flex-col md:flex-row mt-8 gap-8">
-        {/* Poster on the Left */}
+        {/* Poster Section */}
         <div className="w-full md:w-1/4">
           <img
             src={game.background_image}
@@ -62,27 +80,29 @@ const GameDetails = () => {
           />
         </div>
 
-        {/* Details in the Middle */}
+        {/* Details Section */}
         <div className="w-full md:w-2/4 flex flex-col pl-8 pr-8">
-          <p className="text-gray-300 mb-6">
-            {game.description_raw || "No description available."}
-          </p>
+        <h2 className="text-2xl font-bold">{game.name}</h2>
+          <p className="text-gray-300 mb-6 mt-6">{game.description_raw || "No description available."}</p>
         </div>
 
-        {/* Buttons on the Right */}
+        {/* Right Column - Buttons and Stats */}
         <div className="w-full md:w-1/4 flex flex-col gap-4">
-          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">
-            Watch
-          </button>
-          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">
-            Like
-          </button>
-          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">
-            Add to List
-          </button>
-          {/* Stats */}
+          {/* Star Rating for logged-in users */}
+          {userId && (
+            <div className="relative">
+              <StarRating gameId={game.id} />
+            </div>
+          )}
+
+          {/* Buttons */}
+          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Watch</button>
+          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Like</button>
+          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Add to List</button>
+
+          {/* Stats Section */}
           <div className="flex flex-col gap-4">
-            {/* Platforms */}
+            {/* Platforms Section */}
             <div className="bg-gray-800 p-4 rounded-lg">
               <strong>Platforms:</strong>
               <div
@@ -91,9 +111,7 @@ const GameDetails = () => {
                 } overflow-hidden`}
               >
                 <p>
-                  {game.platforms
-                    .map((p: any) => p.platform.name)
-                    .join(", ")}
+                  {game.platforms?.map((p: any) => p.platform.name).join(", ") || "No platforms available"}
                 </p>
               </div>
               {!showMore && (
@@ -114,14 +132,13 @@ const GameDetails = () => {
               )}
             </div>
 
-            {/* Rating */}
+            {/* Rating Section */}
             <div className="bg-gray-800 p-4 rounded-lg">
-              <strong>Rating:</strong>
-              <p>{game.rating}/5</p>
+              <strong>Critic Rating</strong>
+              <p>{game.rating ? `${game.rating}/5` : "N/A"}</p>
             </div>
           </div>
         </div>
-        
       </div>
     </div>
   );
