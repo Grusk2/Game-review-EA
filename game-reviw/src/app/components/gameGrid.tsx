@@ -95,7 +95,7 @@ function GameGrid() {
   }, [page]);
 
   return (
-    <div className="pt-20 pl-80 pr-80">
+    <div className="bg-gray-900 text-white pt-20 px-6 md:px-20">
       <div className="game-card-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {isLoading ? (
           Array.from({ length: 15 }).map((_, index) => (
@@ -103,25 +103,21 @@ function GameGrid() {
           ))
         ) : (
           games.map((game) => (
-            <div key={game.id} className="relative">
-              <GameCard game={game} />
-              <button
-                onClick={() => handleAddToLibrary(game)}
-                className="absolute bottom-2 right-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-              >
-                +
-              </button>
-            </div>
+            <GameCard
+              key={game.id}
+              game={game}
+              onAddToLibrary={handleAddToLibrary}
+            />
           ))
         )}
       </div>
-
+  
       {hasMore && !isLoading && (
         <div className="text-center mt-8">
           <button
             onClick={handleLoadMore}
             disabled={isFetchingMore}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+            className="px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50"
           >
             {isFetchingMore ? "Loading..." : "Load More"}
           </button>
@@ -129,6 +125,8 @@ function GameGrid() {
       )}
     </div>
   );
+  
+  
 }
 
 export default GameGrid;

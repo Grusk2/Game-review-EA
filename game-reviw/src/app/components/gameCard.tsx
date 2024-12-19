@@ -7,13 +7,20 @@ interface Game {
   imageUrl: string;
   description: string;
   rating: number;
+  platforms: string[];
 }
 
-function GameCard({ game }: { game: Game }) {
-  const [isClient, setIsClient] = useState(false); 
+function GameCard({
+  game,
+  onAddToLibrary,
+}: {
+  game: Game;
+  onAddToLibrary: (game: Game) => void;
+}) {
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); 
+    setIsClient(true);
   }, []);
 
   if (!isClient) {
@@ -21,20 +28,28 @@ function GameCard({ game }: { game: Game }) {
   }
 
   return (
-    <div className="game-card bg-white rounded-lg overflow-hidden shadow-md flex flex-col hover:shadow-lg transition-shadow duration-200">
+    <div className="game-card bg-gray-800 rounded-lg overflow-hidden shadow-md flex flex-col relative">
       <Link href={`/game/${game.id}`}>
         <img
           src={game.imageUrl}
           alt={game.title}
-          className="h-40 w-full object-cover"
+          className="h-48 w-full object-cover object-top"
         />
         <div className="p-4 flex-grow">
-          <h2 className="text-lg font-bold mb-2 truncate">{game.title}</h2>
-          <p className="text-sm text-yellow-500 font-semibold">
+          <h2 className="text-lg font-bold text-white mb-6 truncate">
+            {game.title}
+          </h2>
+          <p className="text-sm text-green-400 font-semibold">
             <strong>Rating:</strong> {game.rating.toFixed(1)}
           </p>
         </div>
       </Link>
+      <button
+        onClick={() => onAddToLibrary(game)}
+        className="absolute bottom-4 right-4 px-4 py-2 bg-green-600 text-white text-sm rounded-3xl hover:bg-green-500"
+      >
+        +
+      </button>
     </div>
   );
 }

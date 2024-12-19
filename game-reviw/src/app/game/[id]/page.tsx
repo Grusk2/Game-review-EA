@@ -96,7 +96,7 @@ const GameDetails = () => {
           )}
 
           {/* Buttons */}
-          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Watch</button>
+          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Played</button>
           <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Like</button>
           <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Add to List</button>
 

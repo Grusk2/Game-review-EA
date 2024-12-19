@@ -64,38 +64,47 @@ const LibraryPage = () => {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Your Game Library</h1>
+    <div className="p-6 bg-gray-900 min-h-screen">
+      <h1 className="text-3xl font-bold text-center mb-8 text-white">
+        Your Game Library
+      </h1>
       {games.length === 0 ? (
-        <p className="text-center text-gray-500">No games in your library yet.</p>
+        <p className="text-center text-gray-400">No games in your library yet.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {games.map((game) => (
-            <Link
+            <div
               key={game.id}
-              href={`/game/${game.id}`}
-              className="border rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow"
+              className="game-card bg-gray-800 rounded-lg overflow-hidden shadow-md flex flex-col hover:shadow-lg transition-shadow duration-200"
             >
-              <img
-                src={game.imageUrl}
-                alt={game.title}
-                className="w-full h-48 object-cover rounded-md"
-              />
-              <h3 className="text-lg font-semibold mt-4">{game.title}</h3>
-              <p className="text-gray-500 text-sm">{game.description}</p>
-              <p className="mt-2 text-sm">
-                <span className="font-semibold">Platforms:</span>{" "}
-                {game.platforms.join(", ") || "Unknown"}
-              </p>
-              <p className="text-sm">
-                <span className="font-semibold">Rating:</span> {game.rating}/10
-              </p>
-            </Link>
+              <Link href={`/game/${game.id}`}>
+                <img
+                  src={game.imageUrl}
+                  alt={game.title}
+                  className="h-40 w-full object-cover"
+                />
+                <div className="p-4 flex-grow">
+                  <h2 className="text-lg font-bold mb-2 text-white truncate">
+                    {game.title}
+                  </h2>
+                  <p className="text-sm text-yellow-500 font-semibold">
+                    <strong>Rating:</strong> {game.rating.toFixed(1)}
+                  </p>
+                  <p className="mt-2 text-sm text-gray-400">
+                    <strong>Platforms:</strong>{" "}
+                    {game.platforms.join(", ") || "Unknown"}
+                  </p>
+                </div>
+              </Link>
+            </div>
           ))}
         </div>
       )}
     </div>
   );
+  
+  
+  
 };
 
 export default LibraryPage;
