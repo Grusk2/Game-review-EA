@@ -14,16 +14,10 @@ export default function Header() {
       </div>
       <ul className="flex gap-8">
         <li className="cursor-pointer hover:underline">
-          <Link href="/">Home</Link>
-        </li>
-        <li className="cursor-pointer hover:underline">
           <Link href="/discover">Discover</Link>
         </li>
         <li className="cursor-pointer hover:underline">
           <Link href="/library">Library</Link>
-        </li>
-        <li className="cursor-pointer hover:underline">
-          <Link href="/contact">Contact</Link>
         </li>
         <li className="cursor-pointer hover:underline">
           <Link href="/pages/signup">Sign Up</Link> 

@@ -1,5 +1,4 @@
-"use client";
-
+"use client"
 import React, { useState, useEffect } from "react";
 import GameCard from "../components/gameCard";
 import GameCardPlaceholder from "../components/gameCardPlaceholder";
@@ -28,9 +27,9 @@ function GameGrid() {
   const fetchData = async (pageNumber: number) => {
     try {
       if (pageNumber === 1) {
-        setIsLoading(true);
+        setIsLoading(true); // reset loading state when starting a new fetch
       } else {
-        setIsFetchingMore(true);
+        setIsFetchingMore(true); // only indicate fetching when loading more
       }
 
       const response = await fetch(
@@ -48,7 +47,14 @@ function GameGrid() {
         rating: game.rating,
       }));
 
-      setGames((prevGames) => [...prevGames, ...formattedGames]);
+      // If we are on the first page, we reset the list
+      setGames((prevGames) => {
+        if (pageNumber === 1) {
+          return formattedGames; // reset the list
+        }
+        return [...prevGames, ...formattedGames]; // append new data
+      });
+
       setHasMore(data.next !== null);
       setIsLoading(false);
       setIsFetchingMore(false);
@@ -94,6 +100,11 @@ function GameGrid() {
     fetchData(page);
   }, [page]);
 
+  // Reset the games when component is mounted (on route change, etc.)
+  useEffect(() => {
+    setGames([]); // clear games when navigating to this component
+  }, []);
+
   return (
     <div className="bg-gray-900 text-white pt-20 px-6 md:px-20">
       <div className="game-card-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -113,7 +124,7 @@ function GameGrid() {
       </div>
   
       {hasMore && !isLoading && (
-        <div className="text-center mt-8">
+        <div className="text-center p-8">
           <button
             onClick={handleLoadMore}
             disabled={isFetchingMore}
@@ -125,8 +136,6 @@ function GameGrid() {
       )}
     </div>
   );
-  
-  
 }
 
 export default GameGrid;

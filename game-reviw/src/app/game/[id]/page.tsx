@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../utils/firebase";
 import StarRating from "../../components/starRating";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -82,52 +84,53 @@ const GameDetails = () => {
 
         {/* Details Section */}
         <div className="w-full md:w-2/4 flex flex-col pl-8 pr-8">
-        <h2 className="text-2xl font-bold">{game.name}</h2>
-          <p className="text-gray-300 mb-6 mt-6">{game.description_raw || "No description available."}</p>
+          <h2 className="text-2xl font-bold">{game.name}</h2>
+          <p className="text-gray-300 mb-6 mt-6">
+            {game.description_raw || "No description available."}
+          </p>
         </div>
 
         {/* Right Column - Buttons and Stats */}
-        <div className="w-full md:w-1/4 flex flex-col gap-4">
+        <div className="w-full md:w-1/4 flex flex-col">
+
+          {/* Buttons Section */}
+          <div className="flex justify-between items-center rounded-lg gap-2">
+            <button className="flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 text-white py-4 px-4 rounded w-full">
+              <i className="fas fa-gamepad"></i> Played
+            </button>
+            <button className="flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 text-white py-4 px-4 rounded w-full">
+              <i className="fas fa-thumbs-up"></i> Like
+            </button>
+            <button className="flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 text-white py-4 px-4 rounded w-full">
+              <i className="fas fa-list"></i> Playlist
+            </button>
+          </div>
+
           {/* Star Rating for logged-in users */}
           {userId && (
-            <div className="relative">
+            <div className="mt-4 mb-4">
               <StarRating gameId={game.id} />
             </div>
           )}
-
-          {/* Buttons */}
-          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Played</button>
-          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Like</button>
-          <button className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">Add to List</button>
 
           {/* Stats Section */}
           <div className="flex flex-col gap-4">
             {/* Platforms Section */}
             <div className="bg-gray-800 p-4 rounded-lg">
               <strong>Platforms:</strong>
-              <div
-                className={`${
-                  showMore ? "max-h-none" : "max-h-[100px]"
-                } overflow-hidden`}
-              >
-                <p>
-                  {game.platforms?.map((p: any) => p.platform.name).join(", ") || "No platforms available"}
-                </p>
-              </div>
-              {!showMore && (
+              <p className="text-gray-300">
+                {game.platforms
+                  ?.map((p: any) => p.platform.name)
+                  .slice(0, showMore ? game.platforms.length : 2)
+                  .join(", ") || "No platforms available"}
+                {game.platforms?.length > 2 && !showMore}
+              </p>
+              {game.platforms?.length > 2 && (
                 <button
-                  onClick={() => setShowMore(true)}
+                  onClick={() => setShowMore((prev) => !prev)}
                   className="text-blue-400 hover:underline mt-2"
                 >
-                  Show More
-                </button>
-              )}
-              {showMore && (
-                <button
-                  onClick={() => setShowMore(false)}
-                  className="text-blue-400 hover:underline mt-2"
-                >
-                  Show Less
+                  {showMore ? "Show Less" : "Show More"}
                 </button>
               )}
             </div>

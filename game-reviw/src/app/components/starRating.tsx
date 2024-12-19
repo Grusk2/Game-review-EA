@@ -13,12 +13,12 @@ const StarRating = ({ initialRating = 0, gameId }: StarRatingProps) => {
 
   // Handle clicks on stars
   const handleClick = async (newRating: number) => {
-    setRating(newRating);
+    setRating(newRating);  // Set the rating locally
 
     if (auth.currentUser) {
       try {
         const userRef = doc(db, "users", auth.currentUser.uid, "ratings", gameId);
-        await setDoc(userRef, { rating: newRating });
+        await setDoc(userRef, { rating: newRating });  // Save the numeric rating
         console.log("Saved rating to Firebase:", newRating);
       } catch (error) {
         console.error("Error saving rating to Firebase:", error);
@@ -45,20 +45,19 @@ const StarRating = ({ initialRating = 0, gameId }: StarRatingProps) => {
   };
 
   return (
-    <div className="flex items-center justify-center w-full h-full">
+    <div className="flex items-center justify-center w-full h-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">
       {[0, 1, 2, 3, 4].map((index) => (
         <span
           key={index}
-          className={`cursor-pointer text-4xl md:text-5xl transition duration-100 ease-in-out ${
-            getStarClass(index) === "full"
-              ? "text-yellow-400"
-              : getStarClass(index) === "half"
-              ? "text-yellow-300"
-              : "text-gray-400"
-          }`}
+          className={`cursor-pointer text-4xl md:text-5xl transition duration-100 ease-in-out ${getStarClass(index) === "full"
+            ? "text-yellow-400"
+            : getStarClass(index) === "half"
+            ? "text-yellow-300"
+            : "text-gray-400"
+            }`}
           onMouseEnter={() => handleMouseEnter(index + 0.5)}
           onMouseLeave={handleMouseLeave}
-          onClick={() => handleClick(index + 0.5)}
+          onClick={() => handleClick(index + 0.5)} // Save as number, not as star character
         >
           ★
         </span>
