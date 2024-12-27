@@ -7,30 +7,25 @@ import { auth } from "../../utils/firebase";
 import StarRating from "../../components/starRating";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-
 const GameDetails = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>(); // Explicitly typing id
   const [game, setGame] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null); // Authentication state
-  const [showMore, setShowMore] = useState(false); // Toggle for platforms' visibility
+  const [userId, setUserId] = useState<string | null>(null); // Track user authentication state
+  const [showMore, setShowMore] = useState(false); // Toggle platform visibility
 
-  /** Auth state listener */
+  /** Listen for auth state changes */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.uid); // Save authenticated user's ID
-      } else {
-        setUserId(null);
-      }
+      setUserId(user ? user.uid : null);
     });
-
     return () => unsubscribe();
   }, []);
 
   /** Fetch game details from RAWG API */
   useEffect(() => {
     const fetchGameDetails = async () => {
+      if (!id) return;
       try {
         const response = await fetch(
           `https://api.rawg.io/api/games/${id}?key=${process.env.NEXT_PUBLIC_RAWG_API_KEY}`
@@ -49,9 +44,7 @@ const GameDetails = () => {
       }
     };
 
-    if (id) {
-      fetchGameDetails();
-    }
+    fetchGameDetails();
   }, [id]);
 
   if (loading) return <div>Loading...</div>;
@@ -90,10 +83,9 @@ const GameDetails = () => {
           </p>
         </div>
 
-        {/* Right Column - Buttons and Stats */}
+        {/* Right Column */}
         <div className="w-full md:w-1/4 flex flex-col">
-
-          {/* Buttons Section */}
+          {/* Action Buttons */}
           <div className="flex justify-between items-center rounded-lg gap-2">
             <button className="flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 text-white py-4 px-4 rounded w-full">
               <i className="fas fa-gamepad"></i> Played
@@ -106,16 +98,16 @@ const GameDetails = () => {
             </button>
           </div>
 
-          {/* Star Rating for logged-in users */}
+          {/* Star Rating */}
           {userId && (
             <div className="mt-4 mb-4">
-              <StarRating gameId={game.id} />
+              <StarRating gameId={id as string} />
             </div>
           )}
 
           {/* Stats Section */}
           <div className="flex flex-col gap-4">
-            {/* Platforms Section */}
+            {/* Platforms */}
             <div className="bg-gray-800 p-4 rounded-lg">
               <strong>Platforms:</strong>
               <p className="text-gray-300">
@@ -123,7 +115,6 @@ const GameDetails = () => {
                   ?.map((p: any) => p.platform.name)
                   .slice(0, showMore ? game.platforms.length : 2)
                   .join(", ") || "No platforms available"}
-                {game.platforms?.length > 2 && !showMore}
               </p>
               {game.platforms?.length > 2 && (
                 <button
@@ -135,7 +126,7 @@ const GameDetails = () => {
               )}
             </div>
 
-            {/* Rating Section */}
+            {/* Rating */}
             <div className="bg-gray-800 p-4 rounded-lg">
               <strong>Critic Rating</strong>
               <p>{game.rating ? `${game.rating}/5` : "N/A"}</p>

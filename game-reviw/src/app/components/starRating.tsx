@@ -1,67 +1,71 @@
 import { useState, useEffect } from "react";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "../utils/firebase";
 
 interface StarRatingProps {
-  initialRating?: number;
-  gameId: string;
+  gameId: string; // ID of the game to associate the rating with
 }
 
-const StarRating = ({ initialRating = 0, gameId }: StarRatingProps) => {
-  const [rating, setRating] = useState(initialRating);
-  const [hoverRating, setHoverRating] = useState(0);
+const StarRating = ({ gameId }: StarRatingProps) => {
+  const [rating, setRating] = useState<number | null>(null); // Store the current rating
+  const [hoveredRating, setHoveredRating] = useState<number | null>(null); // Store the hovered rating
 
-  // Handle clicks on stars
-  const handleClick = async (newRating: number) => {
-    setRating(newRating);  // Set the rating locally
+  // Fetch the rating from Firestore when the component mounts
+  useEffect(() => {
+    const fetchRating = async () => {
+      if (auth.currentUser) {
+        try {
+          const userRef = doc(db, "users", auth.currentUser.uid, "ratings", gameId);
+          const userRating = await getDoc(userRef);
+
+          if (userRating.exists()) {
+            setRating(userRating.data()?.rating || null); // Set rating from Firestore
+          }
+        } catch (error) {
+          console.error("Error fetching rating from Firebase:", error);
+        }
+      }
+    };
+
+    fetchRating();
+  }, [gameId]); // This will run every time the gameId changes
+
+  const handleRating = async (newRating: number) => {
+    setRating(newRating); // Update local state
 
     if (auth.currentUser) {
       try {
         const userRef = doc(db, "users", auth.currentUser.uid, "ratings", gameId);
-        await setDoc(userRef, { rating: newRating });  // Save the numeric rating
-        console.log("Saved rating to Firebase:", newRating);
+        await setDoc(userRef, { rating: newRating }); // Save rating to Firestore
+        console.log(`Rating of ${newRating} saved for game ${gameId}`);
       } catch (error) {
         console.error("Error saving rating to Firebase:", error);
       }
+    } else {
+      console.error("User not authenticated!");
     }
-  };
-
-  const handleMouseEnter = (hoverValue: number) => setHoverRating(hoverValue);
-  const handleMouseLeave = () => setHoverRating(0);
-
-  // Determine star type (empty, half, full)
-  const getStarClass = (index: number) => {
-    if (hoverRating) {
-      if (hoverRating >= index + 0.5) return "full";
-      if (hoverRating >= index) return "half";
-    }
-
-    if (rating) {
-      if (rating >= index + 0.5) return "full";
-      if (rating >= index) return "half";
-    }
-
-    return "empty";
   };
 
   return (
-    <div className="flex items-center justify-center w-full h-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded">
-      {[0, 1, 2, 3, 4].map((index) => (
-        <span
-          key={index}
-          className={`cursor-pointer text-4xl md:text-5xl transition duration-100 ease-in-out ${getStarClass(index) === "full"
-            ? "text-yellow-400"
-            : getStarClass(index) === "half"
-            ? "text-yellow-300"
-            : "text-gray-400"
+    <div className="flex flex-col items-center space-y-2">
+      <p className="text-lg font-medium">Rate this Game</p>
+      <div className="flex space-x-2">
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            key={value}
+            className={`px-4 py-2 rounded text-white ${
+              (hoveredRating ?? rating) >= value
+                ? "bg-yellow-500" // Filled star color
+                : "bg-gray-700 hover:bg-gray-600" // Empty star color and hover effect
             }`}
-          onMouseEnter={() => handleMouseEnter(index + 0.5)}
-          onMouseLeave={handleMouseLeave}
-          onClick={() => handleClick(index + 0.5)} // Save as number, not as star character
-        >
-          ★
-        </span>
-      ))}
+            onClick={() => handleRating(value)}
+            onMouseEnter={() => setHoveredRating(value)} // Hover effect
+            onMouseLeave={() => setHoveredRating(null)} // Reset hover effect
+          >
+            &#9733; {/* Star character */}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
