@@ -1,9 +1,11 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
-import GameCard from "../components/gameCard";
-import GameCardPlaceholder from "../components/gameCardPlaceholder";
+import Categories from "./Categories";
+import GameCard from "../components/GameCard";
+import GameCardPlaceholder from "../components/GameCardPlaceholder";
+import TrendingCarousel from "../components/TrendingCarousel";
 import { auth, db } from "../utils/firebase";
-import { collection, doc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 
 interface Game {
@@ -13,6 +15,7 @@ interface Game {
   description: string;
   rating: number;
   platforms: string[];
+  genre?: string;
 }
 
 function GameGrid() {
@@ -21,21 +24,20 @@ function GameGrid() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   const userId = auth.currentUser?.uid;
 
   const fetchData = async (pageNumber: number) => {
     try {
-      if (pageNumber === 1) {
-        setIsLoading(true); // reset loading state when starting a new fetch
-      } else {
-        setIsFetchingMore(true); // only indicate fetching when loading more
-      }
+      if (pageNumber === 1) setIsLoading(true);
+      else setIsFetchingMore(true);
 
-      const response = await fetch(
-        `https://api.rawg.io/api/games?key=${process.env.NEXT_PUBLIC_RAWG_API_KEY}&page=${pageNumber}`
-      );
+      const url = selectedCategory
+        ? `https://api.rawg.io/api/games?key=${process.env.NEXT_PUBLIC_RAWG_API_KEY}&genres=${selectedCategory}&page=${pageNumber}`
+        : `https://api.rawg.io/api/games?key=${process.env.NEXT_PUBLIC_RAWG_API_KEY}&page=${pageNumber}`;
 
+      const response = await fetch(url);
       const data = await response.json();
 
       const formattedGames = data.results.map((game: any) => ({
@@ -47,13 +49,11 @@ function GameGrid() {
         rating: game.rating,
       }));
 
-      // If we are on the first page, we reset the list
-      setGames((prevGames) => {
-        if (pageNumber === 1) {
-          return formattedGames; // reset the list
-        }
-        return [...prevGames, ...formattedGames]; // append new data
-      });
+      setGames((prevGames) =>
+        pageNumber === 1
+          ? formattedGames
+          : [...prevGames, ...formattedGames.filter((g) => !prevGames.some((pg) => pg.id === g.id))]
+      );
 
       setHasMore(data.next !== null);
       setIsLoading(false);
@@ -73,15 +73,7 @@ function GameGrid() {
 
     try {
       const libraryRef = doc(db, "users", userId, "library", game.id.toString());
-
-      await setDoc(libraryRef, {
-        title: game.title,
-        imageUrl: game.imageUrl,
-        description: game.description,
-        platforms: game.platforms,
-        rating: game.rating,
-      });
-
+      await setDoc(libraryRef, game);
       toast.success(`${game.title} added to your library!`);
     } catch (error) {
       console.error("Error adding game to library:", error);
@@ -90,50 +82,57 @@ function GameGrid() {
   };
 
   const handleLoadMore = () => {
-    if (hasMore && !isFetchingMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-    }
+    if (hasMore && !isFetchingMore) setPage((prevPage) => prevPage + 1);
   };
 
   useEffect(() => {
     fetchData(page);
-  }, [page]);
-
-  // Reset the games when component is mounted (on route change, etc.)
-  useEffect(() => {
-    setGames([]); // clear games when navigating to this component
-  }, []);
+  }, [page, selectedCategory]);
 
   return (
-    <div className="bg-gray-900 text-white pt-20 px-6 md:px-20">
-      <div className="game-card-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {isLoading ? (
-          Array.from({ length: 15 }).map((_, index) => (
-            <GameCardPlaceholder key={index} />
-          ))
-        ) : (
-          games.map((game) => (
-            <GameCard
-              key={game.id}
-              game={game}
-              onAddToLibrary={handleAddToLibrary}
-            />
-          ))
-        )}
-      </div>
-  
-      {hasMore && !isLoading && (
-        <div className="text-center p-8">
-          <button
-            onClick={handleLoadMore}
-            disabled={isFetchingMore}
-            className="px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50"
-          >
-            {isFetchingMore ? "Loading..." : "Load More"}
-          </button>
+    <div className="bg-gray-900 text-white min-h-screen pt-20 px-4 sm:px-6 md:px-10 lg:px-20 space-y-12">
+      {/* Trending Carousel */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">Trending Games</h2>
+        <TrendingCarousel />
+      </section>
+
+      {/* Categories Section */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">Categories</h2>
+        <Categories
+          onCategorySelect={(categoryId) => {
+            setSelectedCategory(categoryId ? categoryId.toString() : null);
+            setPage(1);
+            setGames([]);
+          }}
+        />
+      </section>
+
+      {/* Game Grid */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">{selectedCategory || "All Games"}</h2>
+        <div className="game-card-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+          {isLoading ? (
+            Array.from({ length: 15 }).map((_, index) => <GameCardPlaceholder key={index} />)
+          ) : (
+            games.map((game) => (
+              <GameCard key={game.id} game={game} onAddToLibrary={handleAddToLibrary} />
+            ))
+          )}
         </div>
-      )}
+        {hasMore && !isLoading && (
+          <div className="text-center">
+            <button
+              onClick={handleLoadMore}
+              disabled={isFetchingMore}
+              className="px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50"
+            >
+              {isFetchingMore ? "Loading..." : "Load More"}
+            </button>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
