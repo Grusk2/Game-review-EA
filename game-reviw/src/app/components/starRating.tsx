@@ -15,7 +15,13 @@ const StarRating = ({ gameId }: StarRatingProps) => {
     const fetchRating = async () => {
       if (auth.currentUser) {
         try {
-          const userRef = doc(db, "users", auth.currentUser.uid, "ratings", gameId);
+          const userRef = doc(
+            db,
+            "users",
+            auth.currentUser.uid,
+            "ratings",
+            gameId
+          );
           const userRating = await getDoc(userRef);
 
           if (userRating.exists()) {
@@ -35,7 +41,13 @@ const StarRating = ({ gameId }: StarRatingProps) => {
 
     if (auth.currentUser) {
       try {
-        const userRef = doc(db, "users", auth.currentUser.uid, "ratings", gameId);
+        const userRef = doc(
+          db,
+          "users",
+          auth.currentUser.uid,
+          "ratings",
+          gameId
+        );
         await setDoc(userRef, { rating: newRating }); // Save rating to Firestore
         console.log(`Rating of ${newRating} saved for game ${gameId}`);
       } catch (error) {
@@ -54,7 +66,8 @@ const StarRating = ({ gameId }: StarRatingProps) => {
           <button
             key={value}
             className={`px-4 py-2 rounded text-white ${
-              (hoveredRating ?? rating) >= value
+              (hoveredRating !== null && hoveredRating >= value) ||
+              (hoveredRating === null && (rating ?? 0) >= value) // Handle null or undefined rating
                 ? "bg-yellow-500" // Filled star color
                 : "bg-gray-700 hover:bg-gray-600" // Empty star color and hover effect
             }`}

@@ -29,38 +29,41 @@ function GameCard({
 
     // Fetch the user's review for this game
     const fetchUserRating = async () => {
-      if (auth.currentUser) {
-        try {
-          const userRef = doc(db, "users", auth.currentUser.uid, "ratings", game.id.toString());
-          const userRatingDoc = await getDoc(userRef);
+      if (!auth.currentUser) return; // Exit early if the user is not logged in
 
-          if (userRatingDoc.exists()) {
-            setUserRating(userRatingDoc.data()?.rating); // Set the user's rating if it exists
-          }
-        } catch (error) {
-          console.error("Error fetching user rating:", error);
+      try {
+        const userRef = doc(db, "users", auth.currentUser.uid, "ratings", game.id.toString());
+        const userRatingDoc = await getDoc(userRef);
+
+        if (userRatingDoc.exists()) {
+          setUserRating(userRatingDoc.data()?.rating || null); // Set the user's rating if it exists
         }
+      } catch (error) {
+        console.error("Error fetching user rating:", error);
       }
     };
 
     fetchUserRating();
-  }, [game.id]); // Run this effect when the game ID changes
+  }, [game.id]);
 
   useEffect(() => {
     // Check if the game is already in the user's library
-    if (auth.currentUser) {
-      const checkIfAdded = async () => {
-        // Assuming you have a collection called "library" to track added games
+    const checkIfAdded = async () => {
+      if (!auth.currentUser) return; // Exit early if the user is not logged in
+
+      try {
         const userLibraryRef = doc(db, "users", auth.currentUser.uid, "library", game.id.toString());
         const userLibraryDoc = await getDoc(userLibraryRef);
 
         if (userLibraryDoc.exists()) {
           setIsAdded(true); // Set state to true if the game is in the library
         }
-      };
+      } catch (error) {
+        console.error("Error checking if game is in the library:", error);
+      }
+    };
 
-      checkIfAdded();
-    }
+    checkIfAdded();
   }, [game.id]);
 
   if (!isClient) {

@@ -69,7 +69,7 @@ const Header = () => {
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg text-black">
                 <ul className="py-2">
                   <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                    <Link href="/profile">Profile</Link>
+                    <Link href="/pages/profile">Profile</Link>
                   </li>
                   <li
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"

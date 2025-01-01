@@ -1,22 +1,15 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
-import Categories from "./Categories";
-import GameCard from "../components/GameCard";
-import GameCardPlaceholder from "../components/GameCardPlaceholder";
-import TrendingCarousel from "../components/TrendingCarousel";
+import Categories from "./categories";
+import GameCard from "../components/gameCard";
+import GameCardPlaceholder from "../components/gameCardPlaceholder";
+import TrendingCarousel from "../components/trendingCarousel";
+import SearchBar from "./searchBar";
 import { auth, db } from "../utils/firebase";
 import { doc, setDoc } from "firebase/firestore";
+import { Game } from "../utils/types";
 import toast from "react-hot-toast";
-
-interface Game {
-  id: number;
-  title: string;
-  imageUrl: string;
-  description: string;
-  rating: number;
-  platforms: string[];
-  genre?: string;
-}
 
 function GameGrid() {
   const [games, setGames] = useState<Game[]>([]);
@@ -25,8 +18,30 @@ function GameGrid() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<Game[] | null>(null);
 
   const userId = auth.currentUser?.uid;
+
+  useEffect(() => {
+    if (!searchResults) {
+      fetchData(page);
+    }
+  }, [page, selectedCategory, searchResults]);
+
+  // Function to remove duplicates based on `id`
+  const removeDuplicates = (games: Game[]) => {
+    const uniqueGames: Game[] = [];
+    const seenIds = new Set();
+
+    for (const game of games) {
+      if (!seenIds.has(game.id)) {
+        uniqueGames.push(game);
+        seenIds.add(game.id);
+      }
+    }
+
+    return uniqueGames;
+  };
 
   const fetchData = async (pageNumber: number) => {
     try {
@@ -40,7 +55,7 @@ function GameGrid() {
       const response = await fetch(url);
       const data = await response.json();
 
-      const formattedGames = data.results.map((game: any) => ({
+      const formattedGames = data.results.map((game: any): Game => ({
         id: game.id,
         title: game.name,
         imageUrl: game.background_image,
@@ -49,11 +64,10 @@ function GameGrid() {
         rating: game.rating,
       }));
 
-      setGames((prevGames) =>
-        pageNumber === 1
-          ? formattedGames
-          : [...prevGames, ...formattedGames.filter((g) => !prevGames.some((pg) => pg.id === g.id))]
-      );
+      setGames((prevGames) => {
+        const combinedGames = pageNumber === 1 ? formattedGames : [...prevGames, ...formattedGames];
+        return removeDuplicates(combinedGames);
+      });
 
       setHasMore(data.next !== null);
       setIsLoading(false);
@@ -85,43 +99,55 @@ function GameGrid() {
     if (hasMore && !isFetchingMore) setPage((prevPage) => prevPage + 1);
   };
 
-  useEffect(() => {
-    fetchData(page);
-  }, [page, selectedCategory]);
-
   return (
     <div className="bg-gray-900 text-white min-h-screen pt-20 px-4 sm:px-6 md:px-10 lg:px-20 space-y-12">
-      {/* Trending Carousel */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">Trending Games</h2>
-        <TrendingCarousel />
-      </section>
-
-      {/* Categories Section */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">Categories</h2>
-        <Categories
-          onCategorySelect={(categoryId) => {
-            setSelectedCategory(categoryId ? categoryId.toString() : null);
+        <h2 className="text-2xl font-semibold">Search for Games</h2>
+        <SearchBar
+          onSearch={(results) => {
+            setSearchResults(results);
             setPage(1);
-            setGames([]);
+          }}
+          onCancelSearch={() => {
+            setSearchResults(null);
           }}
         />
       </section>
 
-      {/* Game Grid */}
+      {!searchResults && (
+        <>
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold">Trending Games</h2>
+            <TrendingCarousel />
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold">Categories</h2>
+            <Categories
+              onCategorySelect={(categoryId) => {
+                setSelectedCategory(categoryId ? categoryId.toString() : null);
+                setPage(1);
+                setGames([]);
+              }}
+            />
+          </section>
+        </>
+      )}
+
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">{selectedCategory || "All Games"}</h2>
-        <div className="game-card-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-          {isLoading ? (
+        <h2 className="text-2xl font-semibold">
+          {searchResults ? "Search Results" : selectedCategory || "All Games"}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+          {isLoading && !searchResults ? (
             Array.from({ length: 15 }).map((_, index) => <GameCardPlaceholder key={index} />)
           ) : (
-            games.map((game) => (
+            (searchResults || games).map((game) => (
               <GameCard key={game.id} game={game} onAddToLibrary={handleAddToLibrary} />
             ))
           )}
         </div>
-        {hasMore && !isLoading && (
+        {hasMore && !isLoading && !searchResults && (
           <div className="text-center">
             <button
               onClick={handleLoadMore}

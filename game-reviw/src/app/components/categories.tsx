@@ -66,6 +66,10 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
           <Swiper
             modules={[Navigation, Pagination]}
             navigation
+            pagination={{
+              clickable: true,
+              el: ".custom-pagination", // Custom class name
+            }}
             spaceBetween={16}
             slidesPerView={2} // Default for small screens
             breakpoints={{
@@ -86,6 +90,7 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
                 />
               </SwiperSlide>
             ))}
+            <div className="flex justify-center gap-3 align-center custom-pagination mt-4" />
           </Swiper>
         </div>
       )}

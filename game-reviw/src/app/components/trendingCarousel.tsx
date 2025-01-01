@@ -7,6 +7,9 @@ import "swiper/css/pagination";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import GameCard from "../components/gameCard";
 import GameCardPlaceholder from "../components/gameCardPlaceholder";
+import { auth, db } from "../utils/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import toast from "react-hot-toast";
 
 interface Game {
   id: number;
@@ -21,6 +24,8 @@ const TrendingCarousel = () => {
   const [trendingGames, setTrendingGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const userId = auth.currentUser?.uid;
+
   const fetchTrendingGames = async () => {
     try {
       const response = await fetch(
@@ -29,7 +34,7 @@ const TrendingCarousel = () => {
 
       const data = await response.json();
 
-      const formattedGames = data.results.map((game: any) => ({
+      const formattedGames: Game[] = data.results.map((game: any) => ({
         id: game.id,
         title: game.name,
         imageUrl: game.background_image,
@@ -38,11 +43,40 @@ const TrendingCarousel = () => {
         rating: game.rating,
       }));
 
-      setTrendingGames(formattedGames);
+      // Remove duplicates based on game.id
+      const uniqueGames: Game[] = Array.from(
+        new Map<number, Game>(
+          formattedGames.map((g: Game) => [g.id, g])
+        ).values()
+      );
+
+      setTrendingGames(uniqueGames);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching trending games:", error);
       setIsLoading(false);
+    }
+  };
+
+  const handleAddToLibrary = async (game: Game) => {
+    if (!userId) {
+      toast.error("You need to be logged in to add a game to your library.");
+      return;
+    }
+
+    try {
+      const libraryRef = doc(
+        db,
+        "users",
+        userId,
+        "library",
+        game.id.toString()
+      );
+      await setDoc(libraryRef, game);
+      toast.success(`${game.title} added to your library!`);
+    } catch (error) {
+      console.error("Error adding game to library:", error);
+      toast.error("There was an issue adding the game to your library.");
     }
   };
 
@@ -64,10 +98,10 @@ const TrendingCarousel = () => {
           navigation
           pagination={{
             clickable: true,
-            el: ".custom-swiper-pagination", // Target custom pagination container
+            el: ".custom-pagination", // Custom class name
           }}
           autoplay={{ delay: 5000 }}
-          spaceBetween={16} // Adjusted for better spacing between cards
+          spaceBetween={16}
           slidesPerView={1}
           breakpoints={{
             480: { slidesPerView: 2, spaceBetween: 16 },
@@ -78,10 +112,11 @@ const TrendingCarousel = () => {
           {trendingGames.map((game) => (
             <SwiperSlide key={game.id}>
               <div className="hover:scale-105 transform transition duration-300">
-                <GameCard game={game} />
+                <GameCard game={game} onAddToLibrary={handleAddToLibrary} />
               </div>
             </SwiperSlide>
           ))}
+          <div className="flex justify-center gap-3 align-center custom-pagination mt-4" />
         </Swiper>
       )}
     </div>
