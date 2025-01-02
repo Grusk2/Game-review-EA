@@ -5,11 +5,10 @@ import { Game } from "../utils/types";
 import { useRouter } from "next/navigation";
 
 interface SearchBarProps {
-  onSearch: (results: Game[]) => void;
-  onCancelSearch: () => void;
+  onAddToFavorites?: (game: Game) => void; // Made optional
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onCancelSearch }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<Game[]>([]);
@@ -28,12 +27,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onCancelSearch }) => {
         id: game.id,
         title: game.name,
         imageUrl: game.background_image,
-        description: game.description || "No description available",
-        platforms: game.platforms.map((p: any) => p.platform.name),
         rating: game.rating,
+        platforms: game.platforms.map((p: any) => p.platform.name),
+        description: "",
       }));
       setSearchResults(results);
-      onSearch(results); // Pass results back to parent
     } catch (error) {
       console.error("Error fetching search results:", error);
     } finally {
@@ -44,17 +42,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onCancelSearch }) => {
   const handleCancel = () => {
     setSearchQuery("");
     setSearchResults([]);
-    onCancelSearch(); // Call parent cancel search
-  };
-
-  const handleResultClick = (gameId: number) => {
-    router.push(`/game/${gameId}`); // Navigate to the game details page
-    handleCancel(); // Clear search and reset
   };
 
   return (
     <div className="relative">
-      <div className="flex gap-2 mb-4">
+      {/* Search Input */}
+      <div className="flex gap-2 mb-4 relative">
         <input
           type="text"
           placeholder="Search for a game..."
@@ -65,7 +58,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onCancelSearch }) => {
         {searchQuery && (
           <button
             onClick={handleCancel}
-            className="absolute right-12 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+            className="absolute right-20 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
           >
             ✕
           </button>
@@ -81,24 +74,36 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onCancelSearch }) => {
 
       {/* Dropdown Menu for Results */}
       {searchResults.length > 0 && (
-        <div className="absolute z-50 bg-gray-800 text-white rounded-md shadow-lg mt-2 w-full max-h-60 overflow-y-auto mb-10">
+        <div className="absolute z-50 bg-gray-800 text-white rounded-md shadow-lg mt-2 w-full max-h-60 overflow-y-auto">
           {searchResults.map((game) => (
             <div
               key={game.id}
+              onClick={() => router.push(`/game/${game.id}`)} // Redirect to game detail page
               className="flex items-center p-4 hover:bg-gray-700 cursor-pointer"
-              onClick={() => handleResultClick(game.id)}
             >
               <img
                 src={game.imageUrl}
                 alt={game.title}
                 className="w-16 h-16 rounded-md object-cover mr-4"
               />
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold">{game.title}</h3>
                 <p className="text-sm text-gray-400">
                   {game.platforms.join(", ")}
                 </p>
               </div>
+              {/* Conditionally render "Add" button */}
+              {onAddToFavorites && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the router push
+                    onAddToFavorites(game);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500"
+                >
+                  Add
+                </button>
+              )}
             </div>
           ))}
         </div>

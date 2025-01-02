@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { logOut, checkAuth } from "../utils/auth";
+import SearchBar from "../components/searchBar";
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
     const fetchAuthState = async () => {
-      const loggedIn = await checkAuth(); // Replace with your auth check logic
+      const loggedIn = await checkAuth();
       setIsLoggedIn(loggedIn);
     };
     fetchAuthState();
@@ -32,15 +32,10 @@ const Header = () => {
         </Link>
       </div>
 
-      {/* Center Section (Navigation Links) */}
-      <ul className="hidden md:flex gap-8">
-        <li className="cursor-pointer hover:underline">
-          <Link href="/discover">Discover</Link>
-        </li>
-        <li className="cursor-pointer hover:underline">
-          <Link href="/library">Library</Link>
-        </li>
-      </ul>
+      {/* Center Section (SearchBar) */}
+      <div className="flex-1 flex justify-center">
+        <SearchBar />
+      </div>
 
       {/* Right Section (Auth Buttons or Profile Icon) */}
       <div className="flex items-center space-x-4">

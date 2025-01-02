@@ -1,11 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import { Navigation, Pagination } from "swiper/modules";
-import CategoryButton from "./categoryButton";
 
 interface Category {
   id: number;
@@ -48,52 +42,34 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
     setSelectedCategory((prev) => (prev === categoryId ? null : categoryId));
     onCategorySelect(categoryId === selectedCategory ? null : categoryId);
   };
+  
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
   return (
-    <div className="space-y-6">
-      {isLoading && (
-        <div className="flex justify-center items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-
-      {!isLoading && (
-        <div className="relative">
-          <Swiper
-            modules={[Navigation, Pagination]}
-            navigation
-            pagination={{
-              clickable: true,
-              el: ".custom-pagination", // Custom class name
-            }}
-            spaceBetween={16}
-            slidesPerView={2} // Default for small screens
-            breakpoints={{
-              480: { slidesPerView: 3, spaceBetween: 16 },
-              768: { slidesPerView: 4, spaceBetween: 20 },
-              1024: { slidesPerView: 6, spaceBetween: 24 },
-            }}
-            className="pb-12" // Add padding for pagination dots
+    <div className="space-y-4">
+      {isLoading && <p>Loading categories...</p>}
+      {!isLoading &&
+        categories.map((category) => (
+          <div
+            key={category.id}
+            onClick={() => handleCategoryClick(category.id)}
+            className={`cursor-pointer relative w-24 aspect-square rounded-lg overflow-hidden ${
+              category.id === selectedCategory ? "border-2 border-blue-500" : "border border-gray-600"
+            }`}
           >
-            {categories.map((category) => (
-              <SwiperSlide key={category.id}>
-                <CategoryButton
-                  id={category.id.toString()}
-                  name={category.name}
-                  imageUrl={category.imageUrl}
-                  isSelected={category.id === selectedCategory}
-                  onClick={() => handleCategoryClick(category.id)}
-                />
-              </SwiperSlide>
-            ))}
-            <div className="flex justify-center gap-3 align-center custom-pagination mt-4" />
-          </Swiper>
-        </div>
-      )}
+            <img
+              src={category.imageUrl}
+              alt={category.name}
+              className="absolute inset-0 w-full h-full object-cover opacity-70"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
+              <h3 className="text-center text-white text-sm font-semibold">{category.name}</h3>
+            </div>
+          </div>
+        ))}
     </div>
   );
 };

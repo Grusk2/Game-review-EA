@@ -4,6 +4,7 @@ import { auth, db } from "../../utils/firebase";
 import { collection, doc, setDoc, getDocs, query } from "firebase/firestore";
 import toast from "react-hot-toast";
 import SearchBar from "../../components/searchBar";
+import LibraryPage from "@/app/library/page";
 
 interface Game {
   id: number;
@@ -15,12 +16,10 @@ interface Game {
 
 const ProfilePage = () => {
   const [favoriteGames, setFavoriteGames] = useState<Game[]>([]);
-  const [searchResults, setSearchResults] = useState<Game[]>([]);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
 
   const user = auth.currentUser;
 
-  // Fetch Favorite Games from Firestore
   useEffect(() => {
     const fetchFavoriteGames = async () => {
       if (!user) return;
@@ -40,7 +39,6 @@ const ProfilePage = () => {
     fetchFavoriteGames();
   }, [user]);
 
-  // Add Game to Favorites
   const handleAddToFavorites = async (game: Game) => {
     if (!user) {
       toast.error("You need to be logged in to add a game to favorites.");
@@ -68,10 +66,6 @@ const ProfilePage = () => {
     }
   };
 
-  const handleCancelSearch = () => {
-    setSearchResults([]);
-  };
-
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -82,7 +76,6 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 sm:p-10">
-      {/* Profile Header */}
       <header className="flex flex-col sm:flex-row items-center justify-between bg-gray-800 p-6 rounded-lg shadow-md mb-10">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-2xl font-bold uppercase">
@@ -101,7 +94,6 @@ const ProfilePage = () => {
         </button>
       </header>
 
-      {/* Favorite Games Section */}
       <section className="mb-10">
         <h2 className="text-2xl font-semibold mb-4">Your Favorite Games</h2>
         {isLoadingFavorites ? (
@@ -123,32 +115,12 @@ const ProfilePage = () => {
           <p className="text-gray-400">You have no favorite games. Start adding some!</p>
         )}
       </section>
-
-      {/* Search and Add Games Section */}
       <section>
-        <h2 className="text-2xl font-semibold mb-4">Search for Games to Add</h2>
-        <SearchBar
-          onSearch={(results) => setSearchResults(results)}
-          onCancelSearch={handleCancelSearch}
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {searchResults.map((game) => (
-            <div key={game.id} className="bg-gray-800 p-4 rounded-lg shadow-md">
-              <img
-                src={game.imageUrl}
-                alt={game.title}
-                className="rounded-md mb-4 w-full h-48 object-cover"
-              />
-              <h3 className="text-lg font-semibold">{game.title}</h3>
-              <button
-                onClick={() => handleAddToFavorites(game)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 mt-2"
-              >
-                Add to Favorites
-              </button>
-            </div>
-          ))}
-        </div>
+        <LibraryPage />
+      </section>
+      <section>
+        <h2 className="text-2xl font-semibold mb-4">Search and Add Games</h2>
+        <SearchBar onAddToFavorites={handleAddToFavorites} />
       </section>
     </div>
   );

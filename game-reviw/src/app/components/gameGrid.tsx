@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Categories from "./categories";
+import Categories from "../components/categories";
 import GameCard from "../components/gameCard";
 import GameCardPlaceholder from "../components/gameCardPlaceholder";
 import TrendingCarousel from "../components/trendingCarousel";
-import SearchBar from "./searchBar";
 import { auth, db } from "../utils/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { Game } from "../utils/types";
@@ -28,21 +27,6 @@ function GameGrid() {
     }
   }, [page, selectedCategory, searchResults]);
 
-  // Function to remove duplicates based on `id`
-  const removeDuplicates = (games: Game[]) => {
-    const uniqueGames: Game[] = [];
-    const seenIds = new Set();
-
-    for (const game of games) {
-      if (!seenIds.has(game.id)) {
-        uniqueGames.push(game);
-        seenIds.add(game.id);
-      }
-    }
-
-    return uniqueGames;
-  };
-
   const fetchData = async (pageNumber: number) => {
     try {
       if (pageNumber === 1) setIsLoading(true);
@@ -64,10 +48,9 @@ function GameGrid() {
         rating: game.rating,
       }));
 
-      setGames((prevGames) => {
-        const combinedGames = pageNumber === 1 ? formattedGames : [...prevGames, ...formattedGames];
-        return removeDuplicates(combinedGames);
-      });
+      setGames((prevGames) =>
+        pageNumber === 1 ? formattedGames : [...prevGames, ...formattedGames]
+      );
 
       setHasMore(data.next !== null);
       setIsLoading(false);
@@ -100,65 +83,58 @@ function GameGrid() {
   };
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen pt-20 px-4 sm:px-6 md:px-10 lg:px-20 space-y-12">
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">Search for Games</h2>
-        <SearchBar
-          onSearch={(results) => {
-            setSearchResults(results);
+    <div className="bg-gray-900 text-white min-h-screen grid grid-cols-1 lg:grid-cols-[250px_1fr] overflow-x-hidden px-16">
+      <aside className="px-4 w-full max-w-[250px] mb-6">
+        <h2 className="text-xl font-semibold mb-4 mt-6">Categories</h2>
+        <Categories
+          onCategorySelect={(categoryId) => {
+            setSelectedCategory(categoryId ? categoryId.toString() : null);
             setPage(1);
-          }}
-          onCancelSearch={() => {
-            setSearchResults(null);
+            setGames([]);
           }}
         />
-      </section>
+      </aside>
 
-      {!searchResults && (
-        <>
+      <main className="pt-4 space-y-6 overflow-x-hidden">
+        {!searchResults && (
           <section className="space-y-4">
-            <h2 className="text-2xl font-semibold">Trending Games</h2>
+            <h2 className="text-xl font-semibold">Trending Games</h2>
             <TrendingCarousel />
           </section>
-
-          <section className="space-y-4">
-            <h2 className="text-2xl font-semibold">Categories</h2>
-            <Categories
-              onCategorySelect={(categoryId) => {
-                setSelectedCategory(categoryId ? categoryId.toString() : null);
-                setPage(1);
-                setGames([]);
-              }}
-            />
-          </section>
-        </>
-      )}
-
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">
-          {searchResults ? "Search Results" : selectedCategory || "All Games"}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-          {isLoading && !searchResults ? (
-            Array.from({ length: 15 }).map((_, index) => <GameCardPlaceholder key={index} />)
-          ) : (
-            (searchResults || games).map((game) => (
-              <GameCard key={game.id} game={game} onAddToLibrary={handleAddToLibrary} />
-            ))
-          )}
-        </div>
-        {hasMore && !isLoading && !searchResults && (
-          <div className="text-center">
-            <button
-              onClick={handleLoadMore}
-              disabled={isFetchingMore}
-              className="px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50"
-            >
-              {isFetchingMore ? "Loading..." : "Load More"}
-            </button>
-          </div>
         )}
-      </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">
+            {searchResults ? "Search Results" : selectedCategory || "All Games"}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {isLoading && !searchResults ? (
+              Array.from({ length: 15 }).map((_, index) => (
+                <GameCardPlaceholder key={index} />
+              ))
+            ) : (
+              (searchResults || games).map((game) => (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  onAddToLibrary={handleAddToLibrary}
+                />
+              ))
+            )}
+          </div>
+          {hasMore && !isLoading && !searchResults && (
+            <div className="text-center">
+              <button
+                onClick={handleLoadMore}
+                disabled={isFetchingMore}
+                className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50"
+              >
+                {isFetchingMore ? "Loading..." : "Load More"}
+              </button>
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }
