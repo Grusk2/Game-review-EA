@@ -4,16 +4,12 @@ import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../utils/firebase";
-import Link from "next/link";
+import { Game } from "../utils/types";
+import GameCard from "../components/gameCard";
+import { Bar } from "react-chartjs-2";
+import { Chart, registerables } from "chart.js";
 
-interface Game {
-  id: string;
-  title: string;
-  imageUrl: string;
-  description: string;
-  platforms: string[];
-  rating: number;
-}
+Chart.register(...registerables);
 
 const LibraryPage = () => {
   const [games, setGames] = useState<Game[]>([]);
@@ -23,12 +19,15 @@ const LibraryPage = () => {
   useEffect(() => {
     const fetchLibrary = async (uid: string) => {
       try {
-        const libraryRef = collection(db, "users", uid, "library");
+        const libraryRef = collection(db, "users", uid, "ratings");
         const snapshot = await getDocs(libraryRef);
-        const libraryGames = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Game[];
+        const libraryGames = snapshot.docs.map((docSnap) => {
+          const gameData = docSnap.data() as Omit<Game, "id">; // ✅ Omit id from spread
+          return {
+            id: Number(docSnap.id), // ✅ Assigning ID only once
+            ...gameData, // ✅ Spread without overwriting
+          };
+        });
         setGames(libraryGames);
       } catch (error) {
         console.error("Error fetching library games:", error);
@@ -48,63 +47,81 @@ const LibraryPage = () => {
       }
     });
 
-    return () => unsubscribe(); 
+    return () => unsubscribe();
   }, []);
+
+  // Grouping games by rating
+  const ratingCounts = {
+    "5 Stars": games.filter((game) => game.rating === 5).length,
+    "4 Stars": games.filter((game) => game.rating === 4).length,
+    "3 Stars": games.filter((game) => game.rating === 3).length,
+    "2 Stars": games.filter((game) => game.rating === 2).length,
+    "1 Star": games.filter((game) => game.rating === 1).length,
+    "Not Rated": games.filter((game) => !game.rating).length,
+  };
+
+  // Prepare data for the bar chart
+  const chartData = {
+    labels: Object.keys(ratingCounts),
+    datasets: [
+      {
+        label: "Number of Games",
+        data: Object.values(ratingCounts),
+        backgroundColor: ["#4CAF50", "#8BC34A", "#FFC107", "#FF9800", "#F44336", "#9E9E9E"],
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+          precision: 0,
+        },
+      },
+    },
+  };
 
   if (loading) {
     return <p className="text-center text-gray-500 mt-4">Loading your library...</p>;
   }
 
-  if (!userId) {
-    return (
-      <p className="text-center text-gray-500 mt-4">
-        Please log in to view your game library.
-      </p>
-    );
-  }
-
   return (
-    <div className="p-6 bg-gray-900 min-h-screen">
-      <h1 className="text-3xl font-bold text-center mb-8 text-white">
-        Your Game Library
-      </h1>
-      {games.length === 0 ? (
-        <p className="text-center text-gray-400">No games in your library yet.</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {games.map((game) => (
-            <div
-              key={game.id}
-              className="game-card bg-gray-800 rounded-lg overflow-hidden shadow-md flex flex-col hover:shadow-lg transition-shadow duration-200"
-            >
-              <Link href={`/game/${game.id}`}>
-                <img
-                  src={game.imageUrl}
-                  alt={game.title}
-                  className="h-40 w-full object-cover object-top"
-                />
-                <div className="p-4 flex-grow">
-                  <h2 className="text-lg font-bold mb-2 text-white truncate">
-                    {game.title}
-                  </h2>
-                  <p className="text-sm text-yellow-500 font-semibold">
-                    <strong>Rating:</strong> {game.rating.toFixed(1)}
-                  </p>
-                  <p className="mt-2 text-sm text-gray-400">
-                    <strong>Platforms:</strong>{" "}
-                    {game.platforms.join(", ") || "Unknown"}
-                  </p>
-                </div>
-              </Link>
+    <div className="bg-gray-900 min-h-screen text-white p-6">
+      <h2 className="text-3xl font-bold mb-8">Your Completed Games by Rating</h2>
+
+      {/* Bar Chart Section */}
+      <div className="mb-10 w-[50%] h-[250px]">
+        <Bar data={chartData} options={chartOptions} />
+      </div>
+
+      {/* Grouped Games by Rating */}
+      {Object.entries(ratingCounts).map(([rating, count]) => (
+        <section key={rating} className="mb-10">
+          <h3 className="text-2xl font-semibold mb-4">{rating}</h3>
+          {count > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {games
+                .filter((game) =>
+                  rating === "Not Rated"
+                    ? !game.rating
+                    : game.rating === Number(rating.charAt(0))
+                )
+                .map((game) => (
+                  <GameCard key={game.id} game={game} onAddToLibrary={() => {}} />
+                ))}
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            <p className="text-gray-400">No games in this category.</p>
+          )}
+        </section>
+      ))}
     </div>
   );
-  
-  
-  
 };
 
 export default LibraryPage;

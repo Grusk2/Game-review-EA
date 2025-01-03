@@ -56,25 +56,10 @@ const Header = () => {
           <div className="relative">
             <div
               className="w-10 h-10 bg-white text-black flex items-center justify-center rounded-full cursor-pointer"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              👤
+            <Link href="/pages/profile">👤</Link>
+              
             </div>
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg text-black">
-                <ul className="py-2">
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                    <Link href="/pages/profile">Profile</Link>
-                  </li>
-                  <li
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={handleLogout}
-                  >
-                    Logout
-                  </li>
-                </ul>
-              </div>
-            )}
           </div>
         )}
       </div>

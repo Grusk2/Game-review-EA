@@ -85,7 +85,7 @@ const TrendingCarousel = () => {
   }, []);
 
   return (
-    <div className="bg-gray-900 text-white pt-10">
+    <div className="bg-gray-900 text-white">
       {isLoading ? (
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 5 }).map((_, index) => (

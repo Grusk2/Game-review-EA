@@ -95,7 +95,7 @@ function GameGrid() {
         />
       </aside>
 
-      <main className="pt-4 space-y-6 overflow-x-hidden">
+      <main className="mt-6 space-y-6 overflow-x-hidden">
         {!searchResults && (
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Trending Games</h2>
