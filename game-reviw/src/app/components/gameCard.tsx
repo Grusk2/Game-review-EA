@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { useEffect, useState, useRef } from "react";
+import { doc, getDoc, deleteDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "../utils/firebase";
+import toast from "react-hot-toast";
 
 interface Game {
   id: number;
@@ -20,20 +23,24 @@ function GameCard({
   onAddToLibrary: (game: Game) => void;
 }) {
   const [isClient, setIsClient] = useState(false);
-  const [userRating, setUserRating] = useState<number | null>(null); 
-  const [isAdded, setIsAdded] = useState(false); 
-  const [menuOpen, setMenuOpen] = useState(false); 
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [isAddedToLibrary, setIsAddedToLibrary] = useState(false);
+  const [isAddedToFavorites, setIsAddedToFavorites] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-
     const fetchUserRating = async () => {
       if (!auth.currentUser) return;
-
       try {
-        const userRef = doc(db, "users", auth.currentUser.uid, "ratings", game.id.toString());
+        const userRef = doc(
+          db,
+          "users",
+          auth.currentUser.uid,
+          "ratings",
+          game.id.toString()
+        );
         const userRatingDoc = await getDoc(userRef);
-
         if (userRatingDoc.exists()) {
           setUserRating(userRatingDoc.data()?.rating || null);
         }
@@ -48,16 +55,31 @@ function GameCard({
   useEffect(() => {
     const checkIfAdded = async () => {
       if (!auth.currentUser) return;
-
       try {
-        const userLibraryRef = doc(db, "users", auth.currentUser.uid, "library", game.id.toString());
-        const userLibraryDoc = await getDoc(userLibraryRef);
+        const libraryRef = doc(
+          db,
+          "users",
+          auth.currentUser.uid,
+          "library",
+          game.id.toString()
+        );
+        const favoritesRef = doc(
+          db,
+          "users",
+          auth.currentUser.uid,
+          "favorites",
+          game.id.toString()
+        );
 
-        if (userLibraryDoc.exists()) {
-          setIsAdded(true);
-        }
+        const [librarySnap, favoritesSnap] = await Promise.all([
+          getDoc(libraryRef),
+          getDoc(favoritesRef),
+        ]);
+
+        setIsAddedToLibrary(librarySnap.exists());
+        setIsAddedToFavorites(favoritesSnap.exists());
       } catch (error) {
-        console.error("Error checking if game is in the library:", error);
+        console.error("Error checking if game is in library or favorites:", error);
       }
     };
 
@@ -71,34 +93,62 @@ function GameCard({
   const displayedRating = userRating !== null ? userRating : game.rating;
 
   const renderStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <span key={i} className={`text-xl ${i <= rating ? "text-yellow-500" : "text-gray-400"}`}>
-          {i <= rating ? "★" : "☆"}
-        </span>
-      );
-    }
-    return stars;
+    return Array.from({ length: 5 }, (_, i) => (
+      <span
+        key={i}
+        className={`text-xl ${i < rating ? "text-yellow-500" : "text-gray-400"}`}
+      >
+        {i < rating ? "★" : "☆"}
+      </span>
+    ));
   };
 
-  const handleAddToLibrary = () => {
-    if (!isAdded) {
-      onAddToLibrary(game);
-      setIsAdded(true);
-    }
-  };
-
-  const handleRemoveFromLibrary = async () => {
+  /** ✅ Instant Add to Library with Revert on Failure */
+  const handleAddToLibrary = async () => {
     if (!auth.currentUser) return;
+    setIsAddedToLibrary(true); // ✅ Instant state update
 
     try {
-      const userLibraryRef = doc(db, "users", auth.currentUser.uid, "library", game.id.toString());
-      await deleteDoc(userLibraryRef);
-      setIsAdded(false);
-      setMenuOpen(false);
+      const libraryRef = doc(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "library",
+        game.id.toString()
+      );
+      await setDoc(libraryRef, game);
+      toast.success(`${game.title} added to your library!`);
     } catch (error) {
-      console.error("Error removing game from library:", error);
+      console.error("Error adding to library:", error);
+      setIsAddedToLibrary(false); // ❌ Revert state if error
+      toast.error("Failed to add to library.");
+    }
+  };
+
+  /** ✅ Instant Remove from Library or Favorites */
+  const handleRemoveGame = async (collectionName: "library" | "favorites") => {
+    if (!auth.currentUser) return;
+
+    collectionName === "library"
+      ? setIsAddedToLibrary(false)
+      : setIsAddedToFavorites(false); // ✅ Instant removal update
+
+    try {
+      const gameRef = doc(
+        db,
+        "users",
+        auth.currentUser.uid,
+        collectionName,
+        game.id.toString()
+      );
+      await deleteDoc(gameRef);
+      toast.success(`Removed from ${collectionName}`);
+    } catch (error) {
+      console.error(`Error removing from ${collectionName}:`, error);
+      toast.error(`Failed to remove from ${collectionName}`);
+      collectionName === "library"
+        ? setIsAddedToLibrary(true)
+        : setIsAddedToFavorites(true); // ❌ Revert state on error
     }
   };
 
@@ -113,13 +163,23 @@ function GameCard({
           ⋮
         </button>
         {menuOpen && (
-          <div className="absolute right-0 mt-2 w-32 bg-gray-900 rounded-md shadow-lg overflow-hidden z-20">
-            <button
-              onClick={handleRemoveFromLibrary}
-              className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700"
-            >
-              Remove Game
-            </button>
+          <div className="absolute right-0 mt-2 w-32 bg-gray-900 rounded-md shadow-lg z-20">
+            {isAddedToLibrary && (
+              <button
+                onClick={() => handleRemoveGame("library")}
+                className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700"
+              >
+                Remove from Library
+              </button>
+            )}
+            {isAddedToFavorites && (
+              <button
+                onClick={() => handleRemoveGame("favorites")}
+                className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700"
+              >
+                Remove from Favorites
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -132,7 +192,9 @@ function GameCard({
           className="h-48 w-full object-cover object-top"
         />
         <div className="p-4 flex-grow">
-          <h2 className="text-lg font-bold text-white mb-6 truncate">{game.title}</h2>
+          <h2 className="text-lg font-bold text-white mb-6 truncate">
+            {game.title}
+          </h2>
           <p className="text-sm text-green-400 font-semibold">
             {renderStars(displayedRating)}
           </p>
@@ -143,12 +205,12 @@ function GameCard({
       <button
         onClick={handleAddToLibrary}
         className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center rounded-3xl ${
-          isAdded
+          isAddedToLibrary
             ? "bg-transparent border-2 border-green-600 text-green-600"
             : "bg-green-600 hover:bg-green-500"
         }`}
       >
-        {isAdded ? (
+        {isAddedToLibrary ? (
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -156,7 +218,12 @@ function GameCard({
             stroke="currentColor"
             className="w-6 h-6"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         ) : (
           "+"

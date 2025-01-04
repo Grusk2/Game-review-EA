@@ -10,21 +10,29 @@ import {
   deleteDoc,
   query,
 } from "firebase/firestore";
+import { updateProfile } from "firebase/auth";
 import toast from "react-hot-toast";
 import SearchBar from "../../components/searchBar";
 import GameCard from "../../components/gameCard";
 import { Game } from "../../utils/types";
 import LibraryPage from "@/app/library/page";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen } from "@fortawesome/free-solid-svg-icons";
 
 const ProfilePage = () => {
   const [favoriteGames, setFavoriteGames] = useState<Game[]>([]);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
-  const [isSearchOpen, setIsSearchOpen] = useState(false); // For the popup modal
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [user, setUser] = useState(auth.currentUser);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState(user?.displayName || "");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
+      if (user) {
+        setNewDisplayName(user.displayName || "");
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -50,6 +58,23 @@ const ProfilePage = () => {
     }
   }, [user]);
 
+  /** ✅ Save Updated Display Name */
+  const handleUpdateDisplayName = async () => {
+    if (!user || newDisplayName.trim() === "") {
+      toast.error("Name cannot be empty.");
+      return;
+    }
+
+    try {
+      await updateProfile(user, { displayName: newDisplayName });
+      setIsEditingName(false);
+      toast.success("Display name updated successfully!");
+    } catch (error) {
+      console.error("Error updating display name:", error);
+      toast.error("Failed to update display name.");
+    }
+  };
+
   /** ✅ Add to Favorites */
   const handleAddToFavorites = async (game: Game) => {
     if (!user) {
@@ -74,11 +99,17 @@ const ProfilePage = () => {
     }
   };
 
-  /** ✅ Remove from Favorites (Instant Deletion) */
+  /** ✅ Remove from Favorites */
   const handleRemoveFromFavorites = async (gameId: string) => {
     if (!user) return;
     try {
-      const favoriteRef = doc(db, "users", user.uid, "favorites", gameId.toString());
+      const favoriteRef = doc(
+        db,
+        "users",
+        user.uid,
+        "favorites",
+        gameId.toString()
+      );
       await deleteDoc(favoriteRef);
       setFavoriteGames((prevGames) =>
         prevGames.filter((game) => game.id.toString() !== gameId)
@@ -111,19 +142,47 @@ const ProfilePage = () => {
     );
   }
 
-  /** ✅ Return Section - No Tabs, Everything Simplified */
+  /** ✅ Return Section */
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 sm:p-10">
-      {/* Profile Header */}
+      {/* ✅ Profile Header Section */}
       <header className="flex flex-col sm:flex-row items-center justify-between bg-gray-800 p-6 rounded-lg shadow-md mb-10">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-2xl font-bold uppercase">
             {user.displayName?.charAt(0) || user.email?.charAt(0)}
           </div>
           <div>
-            <h1 className="text-2xl font-semibold">
-              {user.displayName || "User"}
-            </h1>
+            {/* ✅ Name Section with Editable Input */}
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newDisplayName}
+                  onChange={(e) => setNewDisplayName(e.target.value)}
+                  className="px-3 py-2 rounded-md bg-gray-700 text-white"
+                />
+                <button
+                  onClick={handleUpdateDisplayName}
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-md"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-semibold">
+                  {user.displayName || "User"}
+                </h1>
+                {/* ✅ Pencil Icon for Editing */}
+                <button
+                  onClick={() => setIsEditingName(true)}
+                  className="text-white hover:text-blue-400 transition"
+                  aria-label="Edit Name"
+                >
+                  <FontAwesomeIcon icon={faPen} size="sm" />
+                </button>
+              </div>
+            )}
             <p className="text-gray-400">{user.email}</p>
           </div>
         </div>
@@ -139,7 +198,6 @@ const ProfilePage = () => {
       <section className="mb-10">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Your Favorite Games</h2>
-          {/* Add Game Button */}
           <button
             onClick={() => setIsSearchOpen(true)}
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500"
@@ -161,7 +219,7 @@ const ProfilePage = () => {
             ))}
           </div>
         ) : (
-          <p className="text-gray-400">You have no favorite games. Start adding some!</p>
+          <p className="text-gray-400">You have no favorite games yet.</p>
         )}
       </section>
 
@@ -175,7 +233,7 @@ const ProfilePage = () => {
             >
               ✕
             </button>
-            <SearchBar />
+            <SearchBar onAddToFavorites={handleAddToFavorites} />
           </div>
         </div>
       )}

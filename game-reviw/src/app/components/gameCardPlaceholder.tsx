@@ -1,15 +1,26 @@
-import React from "react";
-
-function GameCardPlaceholder() {
-  return (
-    <div className="game-card-placeholder bg-gray-300 rounded-lg animate-pulse h-64 w-64">
-      <div className="h-40 bg-gray-400"></div>
-      <div className="p-4 space-y-2">
-        <div className="h-4 bg-gray-400 rounded"></div>
-        <div className="h-4 bg-gray-400 rounded w-3/4"></div>
+const LoadingPlaceholder = () => {
+    return (
+      <div className="game-card bg-gray-800 rounded-lg overflow-hidden shadow-md flex flex-col relative animate-pulse">
+        {/* Image Placeholder */}
+        <div className="h-48 w-full bg-gray-700"></div>
+  
+        {/* Content Placeholder */}
+        <div className="p-4 flex-grow space-y-3">
+          {/* Title Placeholder */}
+          <div className="h-6 bg-gray-700 rounded w-3/4"></div>
+  
+          {/* Rating Placeholder */}
+          <div className="flex space-x-1">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="h-5 w-5 bg-gray-700 rounded"></div>
+            ))}
+          </div>
+        </div>
+  
+        {/* Button Placeholder */}
+        <div className="absolute bottom-4 right-4 w-10 h-10 bg-gray-700 rounded-full"></div>
       </div>
-    </div>
-  );
-}
-
-export default GameCardPlaceholder;
+    );
+  };
+  
+export default LoadingPlaceholder;

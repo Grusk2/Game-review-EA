@@ -8,3 +8,11 @@ export interface Game {
     genre?: string;
   }
   
+export interface FirestoreGame {
+  id: string; 
+  title: string;
+  imageUrl: string;
+  description: string;
+  platforms: string[];
+  rating: number;
+}

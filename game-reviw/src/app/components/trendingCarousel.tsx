@@ -89,7 +89,9 @@ const TrendingCarousel = () => {
       {isLoading ? (
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 5 }).map((_, index) => (
-            <GameCardPlaceholder key={index} />
+            <div key={index} className="hover:scale-105 transform transition duration-300">
+              <GameCardPlaceholder />
+            </div>
           ))}
         </div>
       ) : (
