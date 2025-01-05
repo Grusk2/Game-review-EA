@@ -2,7 +2,7 @@ const LoadingPlaceholder = () => {
     return (
       <div className="game-card bg-gray-800 rounded-lg overflow-hidden shadow-md flex flex-col relative animate-pulse">
         {/* Image Placeholder */}
-        <div className="h-48 w-full bg-gray-700"></div>
+        <div className="h-52 w-full bg-gray-700"></div>
   
         {/* Content Placeholder */}
         <div className="p-4 flex-grow space-y-3">

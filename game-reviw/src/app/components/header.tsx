@@ -2,30 +2,32 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { logOut, checkAuth } from "../utils/auth";
+import { logOut } from "../utils/auth";
 import { auth } from "../utils/firebase";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, onAuthStateChanged, User } from "firebase/auth";
 import toast from "react-hot-toast";
 import SearchBar from "../components/searchBar";
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [user, setUser] = useState(auth.currentUser);
+  const [user, setUser] = useState<User | null>(auth.currentUser);
   const [newDisplayName, setNewDisplayName] = useState(
     user?.displayName || user?.email || "User"
   );
 
   useEffect(() => {
-    const fetchAuthState = async () => {
-      const loggedIn = await checkAuth();
-      setIsLoggedIn(loggedIn);
-      setUser(auth.currentUser);
+    // ✅ Real-time Auth State Listener
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsLoggedIn(!!currentUser);
       setNewDisplayName(
-        auth.currentUser?.displayName || auth.currentUser?.email || "User"
+        currentUser?.displayName || currentUser?.email || "User"
       );
-    };
-    fetchAuthState();
+    });
+
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
   }, []);
 
   /** ✅ Save Updated Display Name */
@@ -38,7 +40,7 @@ const Header = () => {
     try {
       await updateProfile(user, { displayName: newName });
       setNewDisplayName(newName);
-      setDropdownOpen(false); // Close dropdown after updating name
+      setDropdownOpen(false);
       toast.success("Display name updated successfully!");
     } catch (error) {
       console.error("Error updating display name:", error);
@@ -48,10 +50,13 @@ const Header = () => {
 
   /** ✅ Logout */
   const handleLogout = async () => {
-    await logOut();
-    setIsLoggedIn(false);
+    try {
+      await logOut();
+      toast.success("Logged out successfully!");
+    } catch (error) {
+      toast.error("Failed to log out.");
+    }
     setDropdownOpen(false); // Close dropdown after logout
-    toast.success("Logged out successfully!");
   };
 
   return (
@@ -96,11 +101,10 @@ const Header = () => {
             {/* Dropdown Content */}
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg overflow-hidden z-50">
-                <p className="px-4 py-2 font-semibold">{newDisplayName}</p>
                 <Link href="/pages/profile">
                   <p
                     className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                    onClick={() => setDropdownOpen(false)} // Close on click
+                    onClick={() => setDropdownOpen(false)}
                   >
                     View Profile
                   </p>

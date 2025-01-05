@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
@@ -8,13 +7,12 @@ import StarRating from "../../components/starRating";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 const GameDetails = () => {
-  const { id } = useParams<{ id: string }>(); // Explicitly typing id
+  const { id } = useParams<{ id: string }>();
   const [game, setGame] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null); // Track user authentication state
-  const [showMore, setShowMore] = useState(false); // Toggle platform visibility
+  const [userId, setUserId] = useState<string | null>(null);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
-  /** Listen for auth state changes */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUserId(user ? user.uid : null);
@@ -22,7 +20,6 @@ const GameDetails = () => {
     return () => unsubscribe();
   }, []);
 
-  /** Fetch game details from RAWG API */
   useEffect(() => {
     const fetchGameDetails = async () => {
       if (!id) return;
@@ -47,91 +44,95 @@ const GameDetails = () => {
     fetchGameDetails();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (!game) return <div>Game not found.</div>;
+  const toggleDescription = () => {
+    setShowFullDescription((prev) => !prev);
+  };
+
+  if (loading) return <div className="text-center py-10 text-white">Loading...</div>;
+  if (!game) return <div className="text-center py-10 text-white">Game not found.</div>;
 
   return (
-    <div className="bg-gray-900 text-white px-5 md:px-20 py-6">
-      {/* Hero Section */}
-      <div className="relative">
+    <div className="min-h-screen bg-gray-950 text-white px-4 sm:px-8 lg:px-24 py-8 sm:py-16 space-y-16">
+      {/* HERO SECTION */}
+      <div className="relative w-full h-[300px] sm:h-[400px] md:h-[600px] rounded-lg overflow-hidden shadow-xl">
         <img
           src={game.background_image}
           alt={game.name}
-          className="w-full h-[400px] object-cover object-top rounded-lg"
+          className="w-full h-full object-cover object-top brightness-50"
         />
-        <div className="absolute bottom-0 bg-gradient-to-t from-black to-transparent w-full p-4 rounded-lg">
-          <h1 className="text-4xl font-bold">{game.name}</h1>
+        <div className="absolute inset-0 flex flex-col justify-end items-start p-4 sm:p-8 md:p-12 bg-gradient-to-t from-black/80 to-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold">{game.name}</h1>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex flex-col md:flex-row mt-8 gap-8">
-        {/* Poster Section */}
-        <div className="w-full md:w-1/4">
-          <img
-            src={game.background_image}
-            alt={`${game.name} Poster`}
-            className="w-full h-[350px] object-cover rounded-lg"
-          />
-        </div>
-
-        {/* Details Section */}
-        <div className="w-full md:w-2/4 flex flex-col pl-8 pr-8">
-          <h2 className="text-2xl font-bold">{game.name}</h2>
-          <p className="text-gray-300 mb-6 mt-6">
-            {game.description_raw || "No description available."}
-          </p>
-        </div>
-
-        {/* Right Column */}
-        <div className="w-full md:w-1/4 flex flex-col">
-          {/* Action Buttons */}
-          <div className="flex justify-between items-center rounded-lg gap-2">
-            <button className="flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 text-white py-4 px-4 rounded w-full">
+      {/* MAIN CONTENT SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-16 items-start">
+        {/* LEFT COLUMN - GAME INFO */}
+        <div className="flex flex-col justify-between bg-gray-800 p-4 sm:p-8 rounded-lg border border-gray-700 shadow-lg">
+          <div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">{game.name}</h2>
+            <p
+              className={`text-sm sm:text-base leading-relaxed text-gray-300 mt-4 
+                ${showFullDescription ? '' : 'line-clamp-3'} lg:line-clamp-none`}
+            >
+              {game.description_raw}
+            </p>
+            {/* Read More Button (Visible only on phones) */}
+            <button
+              onClick={toggleDescription}
+              className="mt-2 text-blue-400 underline sm:hidden"
+            >
+              {showFullDescription ? "Show Less" : "Read More"}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-4 mt-6">
+            <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 sm:px-6 rounded-lg transition-all">
               <i className="fas fa-gamepad"></i> Played
             </button>
-            <button className="flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 text-white py-4 px-4 rounded w-full">
+            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white py-2 px-4 sm:px-6 rounded-lg transition-all">
               <i className="fas fa-thumbs-up"></i> Like
             </button>
-            <button className="flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 text-white py-4 px-4 rounded w-full">
+            <button className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 sm:px-6 rounded-lg transition-all">
               <i className="fas fa-list"></i> Playlist
             </button>
           </div>
+        </div>
 
-          {/* Star Rating */}
-          {userId && (
-            <div className="mt-4 mb-4">
-              <StarRating gameId={id as string} />
+        {/* RIGHT COLUMN */}
+        <div className="flex flex-col gap-8 lg:flex-row items-stretch">
+          {/* Stats and Rating */}
+          <div className="flex flex-col gap-4 flex-1">
+            <div className="bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-700 shadow-lg">
+              <h3 className="text-lg sm:text-2xl font-semibold">Available Platforms</h3>
+              <div className="flex flex-wrap gap-2 mt-4">
+                {game.platforms?.map((p: any, index: number) => (
+                  <span
+                    key={index}
+                    className="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-lg text-sm"
+                  >
+                    {p.platform.name}
+                  </span>
+                ))}
+              </div>
             </div>
-          )}
-
-          {/* Stats Section */}
-          <div className="flex flex-col gap-4">
-            {/* Platforms */}
-            <div className="bg-gray-800 p-4 rounded-lg">
-              <strong>Platforms:</strong>
-              <p className="text-gray-300">
-                {game.platforms
-                  ?.map((p: any) => p.platform.name)
-                  .slice(0, showMore ? game.platforms.length : 2)
-                  .join(", ") || "No platforms available"}
+            {userId && (
+              <div className="bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-700 shadow-lg text-center">
+                <h3 className="text-lg sm:text-2xl font-semibold">Rate this Game</h3>
+                <StarRating gameId={id as string} />
+              </div>
+            )}
+            <div className="bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-700 shadow-lg text-center">
+              <h3 className="text-lg sm:text-2xl font-semibold">Critic Rating</h3>
+              <p className="text-yellow-400 text-2xl sm:text-4xl font-bold mt-2">
+                {game.rating ? `${game.rating}/5` : "N/A"}
               </p>
-              {game.platforms?.length > 2 && (
-                <button
-                  onClick={() => setShowMore((prev) => !prev)}
-                  className="text-blue-400 hover:underline mt-2"
-                >
-                  {showMore ? "Show Less" : "Show More"}
-                </button>
-              )}
-            </div>
-
-            {/* Rating */}
-            <div className="bg-gray-800 p-4 rounded-lg">
-              <strong>Critic Rating</strong>
-              <p>{game.rating ? `${game.rating}/5` : "N/A"}</p>
             </div>
           </div>
+          <img
+            src={game.background_image}
+            alt={game.name}
+            className="w-full lg:w-[350px] h-auto object-cover rounded-lg border-2 border-gray-700 shadow-lg"
+          />
         </div>
       </div>
     </div>

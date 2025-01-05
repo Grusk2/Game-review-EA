@@ -103,11 +103,14 @@ function GameCard({
     ));
   };
 
-  /** ✅ Instant Add to Library with Revert on Failure */
   const handleAddToLibrary = async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      toast.error("You need to be logged in to add a game to your library.");
+      return;
+    }
+  
     setIsAddedToLibrary(true); // ✅ Instant state update
-
+  
     try {
       const libraryRef = doc(
         db,
@@ -124,6 +127,7 @@ function GameCard({
       toast.error("Failed to add to library.");
     }
   };
+  
 
   /** ✅ Instant Remove from Library or Favorites */
   const handleRemoveGame = async (collectionName: "library" | "favorites") => {

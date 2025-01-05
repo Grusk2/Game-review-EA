@@ -42,34 +42,50 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
     setSelectedCategory((prev) => (prev === categoryId ? null : categoryId));
     onCategorySelect(categoryId === selectedCategory ? null : categoryId);
   };
-  
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
   return (
-    <div className="space-y-4">
-      {isLoading && <p>Loading categories...</p>}
-      {!isLoading &&
-        categories.map((category) => (
-          <div
-            key={category.id}
-            onClick={() => handleCategoryClick(category.id)}
-            className={`cursor-pointer relative w-24 aspect-square rounded-lg overflow-hidden ${
-              category.id === selectedCategory ? "border-2 border-blue-500" : "border border-gray-600"
-            }`}
-          >
-            <img
-              src={category.imageUrl}
-              alt={category.name}
-              className="absolute inset-0 w-full h-full object-cover opacity-70"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-              <h3 className="text-center text-white text-sm font-semibold">{category.name}</h3>
+    <div className="space-y- p-4 md:p-6">
+      {/* Skeleton Loader */}
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-6">
+          {[...Array(19)].map((_, index) => (
+            <div
+              key={index}
+              className="w-full aspect-square rounded-lg overflow-hidden bg-gray-300 animate-pulse"
+            >
+              <div className="w-full h-full bg-gray-400 mb-4"></div>
+              <div className="w-2/3 h-4 bg-gray-400 mx-auto"></div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-6">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              onClick={() => handleCategoryClick(category.id)}
+              className={`cursor-pointer relative w-full aspect-square rounded-lg overflow-hidden transition-all duration-300 ease-in-out hover:scale-105 ${
+                category.id === selectedCategory ? "border-4 border-blue-500" : "border border-gray-600"
+              }`}
+            >
+              <img
+                src={category.imageUrl}
+                alt={category.name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <h3 className="text-center text-white text-lg font-semibold drop-shadow-lg">
+                  {category.name}
+                </h3>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

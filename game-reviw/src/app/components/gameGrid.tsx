@@ -83,9 +83,8 @@ function GameGrid() {
   };
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen grid grid-cols-1 lg:grid-cols-[250px_1fr] overflow-x-hidden px-16">
-      <aside className="px-4 w-full max-w-[250px] mb-6">
-        <h2 className="text-xl font-semibold mb-4 mt-6">Categories</h2>
+    <div className="bg-gray-950 text-white min-h-screen grid grid-cols-1 lg:grid-cols-[250px_1fr] overflow-x-hidden px-16">
+      <aside className="pr-8 max-w-[250px] my-6">
         <Categories
           onCategorySelect={(categoryId) => {
             setSelectedCategory(categoryId ? categoryId.toString() : null);
@@ -95,15 +94,14 @@ function GameGrid() {
         />
       </aside>
 
-      <main className="mt-6 space-y-6 overflow-x-hidden">
+      <main className="overflow-x-hidden mt-12">
         {!searchResults && (
           <section className="space-y-4">
-            <h2 className="text-xl font-semibold">Trending Games</h2>
             <TrendingCarousel />
           </section>
         )}
 
-        <section className="space-y-4">
+        <section className="space-y-4 pt-4">
           <h2 className="text-xl font-semibold">
             {searchResults ? "Search Results" : selectedCategory || "All Games"}
           </h2>

@@ -2,8 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 body {
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* For Mobile Only (Caps to 3 lines) */
+.line-clamp-mobile {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* For Desktop (Full Description) */
+@media (min-width: 1024px) {
+  .line-clamp-mobile {
+    display: block;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+    overflow: visible;
+  }
 }
