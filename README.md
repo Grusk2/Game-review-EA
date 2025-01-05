@@ -29,12 +29,12 @@ Checklista
 Nedan är en checklista över de krav som uppgiften innefattar:
 
 G-Krav
-[ ] Planering och Research
-[ ] Design och Prototyping
-[ ] Applikationsutveckling
-[ ] Versionshantering
-[ ] Slutrapport
-[ ] Deploy
+[✓] Planering och Research
+[✓] Design och Prototyping
+[✓] Applikationsutveckling
+[✓] Versionshantering
+[✓] Slutrapport
+[X] Deploy
 
 Teknologier
 
