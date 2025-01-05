@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Link from "next/link"; // ✅ Import Link component
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -91,6 +92,7 @@ const TrendingCarousel = () => {
     <div className="bg-gray-900 text-white">
       {isLoading ? (
         <div className="flex justify-center items-center w-full h-[600px] bg-gray-700 animate-pulse rounded-lg relative">
+          Loading...
         </div>
       ) : (
         <Swiper
@@ -98,7 +100,7 @@ const TrendingCarousel = () => {
           effect="fade"
           pagination={{ clickable: true }}
           autoplay={{ delay: 4000, disableOnInteraction: false }}
-          spaceBetween={50} // More space between slides
+          spaceBetween={50}
           slidesPerView={1}
           loop={true}
           className="w-full h-[600px]"
@@ -118,9 +120,13 @@ const TrendingCarousel = () => {
 
                 {/* Content Section */}
                 <div className="relative z-20 text-left px-12 max-w-2xl space-y-6">
-                  <h2 className="text-5xl font-extrabold text-white mb-4 leading-tight drop-shadow-lg">
-                    {game.title}
-                  </h2>
+                  {/* ✅ Link Added to the Game Title */}
+                  <Link href={`/game/${game.id}`}>
+                    <h2 className="text-5xl font-extrabold text-white mb-4 leading-tight drop-shadow-lg cursor-pointer hover:text-blue-400 transition-all duration-200">
+                      {game.title}
+                    </h2>
+                  </Link>
+                  
                   <p className="text-lg text-gray-300 font-light">
                     Available on:{" "}
                     <span className="font-semibold text-white">

@@ -48,11 +48,11 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
   }, []);
 
   return (
-    <div className="space-y- p-4 md:p-6">
+    <div className="space-y-4 p-4 md:p-6">
       {/* Skeleton Loader */}
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-1 gap-6">
-          {[...Array(19)].map((_, index) => (
+          {[...Array(10)].map((_, index) => (
             <div
               key={index}
               className="w-full aspect-square rounded-lg overflow-hidden bg-gray-300 animate-pulse"
@@ -63,7 +63,7 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-1 gap-6">
+        <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-1 gap-6">
           {categories.map((category) => (
             <div
               key={category.id}

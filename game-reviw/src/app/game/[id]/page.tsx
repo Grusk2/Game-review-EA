@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../utils/firebase";
+import { auth, db } from "../../utils/firebase";
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import StarRating from "../../components/starRating";
+import toast from "react-hot-toast";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 const GameDetails = () => {
@@ -12,6 +14,8 @@ const GameDetails = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isAddedToLibrary, setIsAddedToLibrary] = useState(false);
+  const [isAddedToFavorites, setIsAddedToFavorites] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -34,6 +38,17 @@ const GameDetails = () => {
 
         const data = await response.json();
         setGame(data);
+
+        if (userId) {
+          const libraryRef = doc(db, "users", userId, "library", id);
+          const favoritesRef = doc(db, "users", userId, "favorites", id);
+          const [librarySnap, favoritesSnap] = await Promise.all([
+            getDoc(libraryRef),
+            getDoc(favoritesRef),
+          ]);
+          setIsAddedToLibrary(librarySnap.exists());
+          setIsAddedToFavorites(favoritesSnap.exists());
+        }
       } catch (error) {
         console.error("Error fetching game details:", error);
       } finally {
@@ -42,10 +57,53 @@ const GameDetails = () => {
     };
 
     fetchGameDetails();
-  }, [id]);
+  }, [id, userId]);
 
   const toggleDescription = () => {
     setShowFullDescription((prev) => !prev);
+  };
+
+  const handleAddGame = async (collectionName: "library" | "favorites") => {
+    if (!userId) {
+      toast.error("You need to be logged in to add a game.");
+      return;
+    }
+
+    try {
+      const gameRef = doc(
+        db,
+        "users",
+        userId,
+        collectionName,
+        id
+      );
+      await setDoc(gameRef, game);
+      if (collectionName === "library") setIsAddedToLibrary(true);
+      if (collectionName === "favorites") setIsAddedToFavorites(true);
+      toast.success(`${game.title} added to ${collectionName}!`);
+    } catch (error) {
+      toast.error(`Failed to add to ${collectionName}.`);
+    }
+  };
+
+  const handleRemoveGame = async (collectionName: "library" | "favorites") => {
+    if (!userId) return;
+
+    try {
+      const gameRef = doc(
+        db,
+        "users",
+        userId,
+        collectionName,
+        id
+      );
+      await deleteDoc(gameRef);
+      if (collectionName === "library") setIsAddedToLibrary(false);
+      if (collectionName === "favorites") setIsAddedToFavorites(false);
+      toast.success(`Removed from ${collectionName}`);
+    } catch (error) {
+      toast.error(`Failed to remove from ${collectionName}`);
+    }
   };
 
   if (loading) return <div className="text-center py-10 text-white">Loading...</div>;
@@ -73,7 +131,7 @@ const GameDetails = () => {
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">{game.name}</h2>
             <p
               className={`text-sm sm:text-base leading-relaxed text-gray-300 mt-4 
-                ${showFullDescription ? '' : 'line-clamp-3'} lg:line-clamp-none`}
+                ${showFullDescription ? "" : "line-clamp-3"} lg:line-clamp-none`}
             >
               {game.description_raw}
             </p>
@@ -83,17 +141,6 @@ const GameDetails = () => {
               className="mt-2 text-blue-400 underline sm:hidden"
             >
               {showFullDescription ? "Show Less" : "Read More"}
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-4 mt-6">
-            <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 sm:px-6 rounded-lg transition-all">
-              <i className="fas fa-gamepad"></i> Played
-            </button>
-            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white py-2 px-4 sm:px-6 rounded-lg transition-all">
-              <i className="fas fa-thumbs-up"></i> Like
-            </button>
-            <button className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 sm:px-6 rounded-lg transition-all">
-              <i className="fas fa-list"></i> Playlist
             </button>
           </div>
         </div>
@@ -115,12 +162,15 @@ const GameDetails = () => {
                 ))}
               </div>
             </div>
+
+            {/* Rating Component */}
             {userId && (
               <div className="bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-700 shadow-lg text-center">
-                <h3 className="text-lg sm:text-2xl font-semibold">Rate this Game</h3>
                 <StarRating gameId={id as string} />
               </div>
             )}
+
+            {/* Critic Rating */}
             <div className="bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-700 shadow-lg text-center">
               <h3 className="text-lg sm:text-2xl font-semibold">Critic Rating</h3>
               <p className="text-yellow-400 text-2xl sm:text-4xl font-bold mt-2">
@@ -128,6 +178,8 @@ const GameDetails = () => {
               </p>
             </div>
           </div>
+
+          {/* Game Image */}
           <img
             src={game.background_image}
             alt={game.name}

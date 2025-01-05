@@ -198,12 +198,6 @@ const ProfilePage = () => {
       <section className="mb-10">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Your Favorite Games</h2>
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500"
-          >
-            + Add Game
-          </button>
         </div>
 
         {isLoadingFavorites ? (

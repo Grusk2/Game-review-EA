@@ -5,6 +5,8 @@ import { useEffect, useState, useRef } from "react";
 import { doc, getDoc, deleteDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "../utils/firebase";
 import toast from "react-hot-toast";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar, faCheckCircle, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 
 interface Game {
   id: number;
@@ -27,6 +29,7 @@ function GameCard({
   const [isAddedToLibrary, setIsAddedToLibrary] = useState(false);
   const [isAddedToFavorites, setIsAddedToFavorites] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null); // ✅ Ref for dropdown
 
   useEffect(() => {
     setIsClient(true);
@@ -86,56 +89,63 @@ function GameCard({
     checkIfAdded();
   }, [game.id]);
 
+  useEffect(() => {
+    /** ✅ Detect clicks outside the dropdown to close it */
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
   if (!isClient) {
     return null;
   }
 
-  const displayedRating = userRating !== null ? userRating : game.rating;
-
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <span
-        key={i}
-        className={`text-xl ${i < rating ? "text-yellow-500" : "text-gray-400"}`}
-      >
-        {i < rating ? "★" : "☆"}
-      </span>
-    ));
-  };
-
-  const handleAddToLibrary = async () => {
+  /** ✅ Add Game to Library or Favorites */
+  const handleAddGame = async (collectionName: "library" | "favorites") => {
     if (!auth.currentUser) {
-      toast.error("You need to be logged in to add a game to your library.");
+      toast.error("You need to be logged in to add a game.");
       return;
     }
-  
-    setIsAddedToLibrary(true); // ✅ Instant state update
-  
+
+    collectionName === "library"
+      ? setIsAddedToLibrary(true)
+      : setIsAddedToFavorites(true);
+
     try {
-      const libraryRef = doc(
+      const gameRef = doc(
         db,
         "users",
         auth.currentUser.uid,
-        "library",
+        collectionName,
         game.id.toString()
       );
-      await setDoc(libraryRef, game);
-      toast.success(`${game.title} added to your library!`);
+      await setDoc(gameRef, game);
+      toast.success(`${game.title} added to your ${collectionName}!`);
     } catch (error) {
-      console.error("Error adding to library:", error);
-      setIsAddedToLibrary(false); // ❌ Revert state if error
-      toast.error("Failed to add to library.");
+      toast.error(`Failed to add to ${collectionName}.`);
+      collectionName === "library"
+        ? setIsAddedToLibrary(false)
+        : setIsAddedToFavorites(false);
     }
   };
-  
 
-  /** ✅ Instant Remove from Library or Favorites */
+  /** ✅ Remove from Library or Favorites */
   const handleRemoveGame = async (collectionName: "library" | "favorites") => {
     if (!auth.currentUser) return;
 
     collectionName === "library"
       ? setIsAddedToLibrary(false)
-      : setIsAddedToFavorites(false); // ✅ Instant removal update
+      : setIsAddedToFavorites(false);
 
     try {
       const gameRef = doc(
@@ -148,40 +158,56 @@ function GameCard({
       await deleteDoc(gameRef);
       toast.success(`Removed from ${collectionName}`);
     } catch (error) {
-      console.error(`Error removing from ${collectionName}:`, error);
       toast.error(`Failed to remove from ${collectionName}`);
       collectionName === "library"
         ? setIsAddedToLibrary(true)
-        : setIsAddedToFavorites(true); // ❌ Revert state on error
+        : setIsAddedToFavorites(true);
     }
   };
 
   return (
     <div className="game-card bg-gray-800 rounded-lg overflow-hidden shadow-md flex flex-col relative">
-      {/* Three-dot menu for removing the game */}
-      <div className="absolute top-2 right-2 z-10">
+      {/* ✅ Three-dot menu with ref for click outside */}
+      <div className="absolute top-2 right-2 z-10" ref={dropdownRef}>
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={() => setMenuOpen((prev) => !prev)}
           className="text-white text-lg focus:outline-none"
         >
-          ⋮
+          <FontAwesomeIcon icon={faEllipsisV} />
         </button>
         {menuOpen && (
-          <div className="absolute right-0 mt-2 w-32 bg-gray-900 rounded-md shadow-lg z-20">
-            {isAddedToLibrary && (
+          <div className="absolute right-0 mt-2 w-36 bg-gray-900 rounded-md shadow-lg z-20">
+            {/* Library Actions */}
+            {isAddedToLibrary ? (
               <button
                 onClick={() => handleRemoveGame("library")}
                 className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700"
               >
                 Remove from Library
               </button>
+            ) : (
+              <button
+                onClick={() => handleAddGame("library")}
+                className="w-full text-left px-4 py-2 text-sm text-green-500 hover:bg-gray-700"
+              >
+                Add to Library
+              </button>
             )}
-            {isAddedToFavorites && (
+
+            {/* Favorite Actions */}
+            {isAddedToFavorites ? (
               <button
                 onClick={() => handleRemoveGame("favorites")}
                 className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700"
               >
                 Remove from Favorites
+              </button>
+            ) : (
+              <button
+                onClick={() => handleAddGame("favorites")}
+                className="w-full text-left px-4 py-2 text-sm text-yellow-500 hover:bg-gray-700"
+              >
+                Add to Favorites
               </button>
             )}
           </div>
@@ -200,39 +226,39 @@ function GameCard({
             {game.title}
           </h2>
           <p className="text-sm text-green-400 font-semibold">
-            {renderStars(displayedRating)}
+            {Array.from({ length: 5 }, (_, i) => (
+              <span
+                key={i}
+                className={`text-xl ${
+                  i < (userRating ?? game.rating)
+                    ? "text-yellow-500"
+                    : "text-gray-400"
+                }`}
+              >
+                {i < (userRating ?? game.rating) ? "★" : "★"}
+              </span>
+            ))}
           </p>
         </div>
       </Link>
 
-      {/* Add to Library Button */}
-      <button
-        onClick={handleAddToLibrary}
-        className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center rounded-3xl ${
-          isAddedToLibrary
-            ? "bg-transparent border-2 border-green-600 text-green-600"
-            : "bg-green-600 hover:bg-green-500"
-        }`}
-      >
-        {isAddedToLibrary ? (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        ) : (
-          "+"
+      {/* ✅ Icons Based on Library and Favorite Status */}
+      <div className="absolute top-2 left-2 flex gap-2">
+        {isAddedToLibrary && (
+          <FontAwesomeIcon
+            icon={faCheckCircle}
+            className="text-green-500 text-xl"
+            title="In Library"
+          />
         )}
-      </button>
+        {isAddedToFavorites && (
+          <FontAwesomeIcon
+            icon={faStar}
+            className="text-yellow-500 text-xl"
+            title="Favorite"
+          />
+        )}
+      </div>
     </div>
   );
 }

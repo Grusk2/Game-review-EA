@@ -1,7 +1,6 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../utils/firebase";
 import { FirestoreGame } from "../utils/types";
@@ -26,88 +25,94 @@ const LibraryPage = () => {
     const [userId, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchLibraryWithRatings = async (uid: string) => {
-            console.log("🔎 Fetching library and ratings for user:", uid); 
+        let unsubscribeLibrary: () => void = () => {};
+        let unsubscribeRatings: () => void = () => {};
+
+        const fetchRealTimeLibrary = (uid: string) => {
             try {
                 const libraryRef = collection(db, "users", uid, "library");
                 const ratingsRef = collection(db, "users", uid, "ratings");
 
-                const [librarySnapshot, ratingsSnapshot] = await Promise.all([
-                    getDocs(libraryRef),
-                    getDocs(ratingsRef),
-                ]);
+                let libraryGames: Game[] = [];
 
-                console.log("📊 Library Snapshot Size:", librarySnapshot.size);
-                console.log("📊 Ratings Snapshot Size:", ratingsSnapshot.size);
+                // ✅ Fetch library and ensure proper structure
+                unsubscribeLibrary = onSnapshot(libraryRef, (librarySnapshot) => {
+                    libraryGames = librarySnapshot.docs.map((docSnap) => {
+                        const data = docSnap.data() as FirestoreGame;
+                        return {
+                            id: Number(docSnap.id),
+                            title: data.title ?? "Untitled Game",
+                            imageUrl: data.imageUrl ?? "/placeholder.png",
+                            description: data.description ?? "No description available.",
+                            platforms: data.platforms ?? ["Unknown"],
+                            rating: 0, 
+                        };
+                    });
 
-                if (librarySnapshot.empty) {
-                    console.warn("⚠️ No games found in the library!");
-                    setGames([]);
-                    setLoading(false);
-                    return;
-                }
-
-                // Create a map for ratings from the "ratings" collection
-                const ratingsMap = new Map(
-                    ratingsSnapshot.docs.map((doc) => [
-                        Number(doc.id), 
-                        doc.data().rating ?? 0
-                    ])
-                );
-
-                console.log("🗺️ Ratings Map Created:", ratingsMap);
-
-                // Merge data from both collections
-                const mergedGames: Game[] = librarySnapshot.docs.map((docSnap) => {
-                    const data = docSnap.data() as FirestoreGame;
-                    const gameId = Number(docSnap.id);
-                    return {
-                        id: gameId,
-                        title: data.title ?? "Untitled Game",
-                        imageUrl: data.imageUrl ?? "/placeholder.png",
-                        description: data.description ?? "No description available.",
-                        platforms: data.platforms ?? ["Unknown"],
-                        rating: ratingsMap.get(gameId) ?? 0,  // Merging rating from the map
-                    };
+                    setGames([...libraryGames]);
                 });
 
-                console.log("✅ Final Merged Games Data:", mergedGames);
-                setGames(mergedGames);
+                // ✅ Fetch ratings and merge into the existing games array
+                unsubscribeRatings = onSnapshot(ratingsRef, (ratingsSnapshot) => {
+                    const ratingsMap = new Map(
+                        ratingsSnapshot.docs.map((doc) => [
+                            Number(doc.id),
+                            doc.data().rating ?? 0,
+                        ])
+                    );
+
+                    // ✅ Update the games ensuring all fields exist
+                    setGames((prevGames) =>
+                        prevGames.map((game) => ({
+                            ...game,
+                            rating: ratingsMap.get(game.id) ?? game.rating,
+                            title: game.title, // Ensure title persists
+                            imageUrl: game.imageUrl,
+                            description: game.description,
+                            platforms: game.platforms,
+                        }))
+                    );
+                });
             } catch (error) {
-                console.error("❌ Error fetching library games and ratings:", error);
+                console.error("❌ Error setting up real-time listeners:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
                 setUserId(user.uid);
-                fetchLibraryWithRatings(user.uid);
+                fetchRealTimeLibrary(user.uid);
             } else {
-                console.warn("⚠️ No user signed in.");
                 setUserId(null);
                 setGames([]);
                 setLoading(false);
             }
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribeAuth();
+            unsubscribeLibrary();
+            unsubscribeRatings();
+        };
     }, []);
 
-    // Group games by rating
-    const ratingCounts = {
-        "5 Stars": games.filter((game) => game.rating === 5).length,
-        "4 Stars": games.filter((game) => game.rating === 4).length,
-        "3 Stars": games.filter((game) => game.rating === 3).length,
-        "2 Stars": games.filter((game) => game.rating === 2).length,
-        "1 Star": games.filter((game) => game.rating === 1).length,
-        "Not Rated": games.filter((game) => game.rating === 0).length,
+    // ✅ Grouping Logic Sorted from 5 Stars to Unrated
+    const groupedGames = {
+        "5 Stars": games.filter((game) => game.rating === 5),
+        "4 Stars": games.filter((game) => game.rating === 4),
+        "3 Stars": games.filter((game) => game.rating === 3),
+        "2 Stars": games.filter((game) => game.rating === 2),
+        "1 Star": games.filter((game) => game.rating === 1),
+        "Not Rated": games.filter((game) => game.rating === 0),
     };
 
-    console.log("📊 Final Calculated Rating Counts:", ratingCounts);
+    // ✅ Bar Chart Data Preparation
+    const ratingCounts = Object.fromEntries(
+        Object.entries(groupedGames).map(([rating, games]) => [rating, games.length])
+    );
 
-    // Prepare data for the bar chart with adjusted settings
     const chartData = {
         labels: Object.keys(ratingCounts),
         datasets: [
@@ -128,15 +133,14 @@ const LibraryPage = () => {
 
     const chartOptions = {
         responsive: true,
-        maintainAspectRatio: false, 
+        maintainAspectRatio: false,
         scales: {
             y: {
-                beginAtZero: true,          
+                beginAtZero: true,
                 ticks: {
-                    stepSize: 1,           
-                    precision: 0,          
+                    stepSize: 1,
+                    precision: 0,
                 },
-                suggestedMax: Math.max(...Object.values(ratingCounts)) + 2,  
             },
         },
     };
@@ -149,30 +153,20 @@ const LibraryPage = () => {
         <div className="bg-gray-900 min-h-screen text-white p-6">
             <h2 className="text-3xl font-bold mb-8">Your Completed Games by Rating</h2>
 
-            {/* Bar Chart Section */}
+            {/* ✅ Bar Chart Section */}
             <div className="mb-10 w-[50%] h-[250px]">
                 <Bar data={chartData} options={chartOptions} />
             </div>
 
-            {/* Grouped Games by Rating with Dividers */}
-            {Object.entries(ratingCounts).map(([rating, count], index) => (
+            {/* ✅ Grouped Games Section - Proper Order */}
+            {Object.entries(groupedGames).map(([rating, games]) => (
                 <section key={rating} className="mb-10">
                     <h3 className="text-2xl font-semibold mb-4">{rating}</h3>
-                    
-                    {/* Divider between sections */}
-                    {index !== 0 && <hr className="border-t border-gray-600 my-6" />}
-                    
-                    {count > 0 ? (
+                    {games.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {games
-                                .filter((game) =>
-                                    rating === "Not Rated"
-                                        ? game.rating === 0
-                                        : game.rating === Number(rating.charAt(0))
-                                )
-                                .map((game) => (
-                                    <GameCard key={game.id} game={game} onAddToLibrary={() => {}} />
-                                ))}
+                            {games.map((game) => (
+                                <GameCard key={game.id} game={game} onAddToLibrary={() => {}} />
+                            ))}
                         </div>
                     ) : (
                         <p className="text-gray-400">No games in this category.</p>

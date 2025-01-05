@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { logOut } from "../utils/auth";
 import { auth } from "../utils/firebase";
 import { updateProfile, onAuthStateChanged, User } from "firebase/auth";
@@ -16,6 +16,8 @@ const Header = () => {
     user?.displayName || user?.email || "User"
   );
 
+  const dropdownRef = useRef<HTMLDivElement>(null); // ✅ Ref for dropdown container
+
   useEffect(() => {
     // ✅ Real-time Auth State Listener
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -26,9 +28,28 @@ const Header = () => {
       );
     });
 
-    // Cleanup the listener on component unmount
+    // ✅ Cleanup the listener on component unmount
     return () => unsubscribe();
   }, []);
+
+  /** ✅ Close Dropdown when Clicking Outside */
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   /** ✅ Save Updated Display Name */
   const handleUpdateDisplayName = async (newName: string) => {
@@ -53,10 +74,10 @@ const Header = () => {
     try {
       await logOut();
       toast.success("Logged out successfully!");
+      setDropdownOpen(false); // Close dropdown on logout
     } catch (error) {
       toast.error("Failed to log out.");
     }
-    setDropdownOpen(false); // Close dropdown after logout
   };
 
   return (
@@ -64,7 +85,7 @@ const Header = () => {
       {/* Left Section (Logo) */}
       <div>
         <Link href="/">
-          <img src="/GameLens.png" alt="Logo" className="h-12 cursor-pointer" />
+          <img src="/GameLens.png" alt="Logo" className="h-20 cursor-pointer" />
         </Link>
       </div>
 
@@ -89,8 +110,8 @@ const Header = () => {
             </Link>
           </>
         ) : (
-          <div className="relative z-50">
-            {/* Profile Picture Button */}
+          <div className="relative z-50" ref={dropdownRef}>
+            {/* ✅ Profile Picture Button */}
             <div
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="w-12 h-12 bg-blue-500 text-white flex items-center justify-center rounded-full cursor-pointer text-lg font-bold"
@@ -98,7 +119,7 @@ const Header = () => {
               {newDisplayName?.charAt(0).toUpperCase()}
             </div>
 
-            {/* Dropdown Content */}
+            {/* ✅ Dropdown Content with Click Outside Handling */}
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg overflow-hidden z-50">
                 <Link href="/pages/profile">
