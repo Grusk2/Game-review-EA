@@ -29,7 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // ✅ Close dropdown on outside click
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -43,7 +43,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /** ✅ Corrected Search Function with Defensive Check */
+  /** Corrected Search Function with Defensive Check */
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
@@ -61,14 +61,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
 
       const data = await response.json();
 
-      // ✅ Defensive check for missing or null results
+      // Defensive check for missing or null results
       if (!data.results || !Array.isArray(data.results) || data.results.length === 0) {
         toast.error("No results found.");
         setSearchResults([]);
         return;
       }
 
-      // ✅ Map results safely
+      // Map results safely
       const results: Game[] = data.results.map((game: any) => ({
         id: game.id,
         title: game.name,
@@ -98,7 +98,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
     setSearchQuery("");
   };
 
-  /** ✅ Skeleton Loader for Loading State */
+  /** Skeleton Loader for Loading State */
   const SkeletonLoader = () => (
     <div className="flex items-center gap-4 p-4 animate-pulse">
       <div className="w-16 h-16 bg-gray-700 rounded-lg"></div>
@@ -111,7 +111,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
 
   return (
     <div ref={searchBarRef} className="relative w-full max-w-lg mx-auto py-4">
-      {/* ✅ Search Input */}
+      {/* Search Input */}
       <div className="flex gap-2 items-center relative bg-gray-800 p-2 rounded-full shadow-lg">
         <input
           type="text"
@@ -130,7 +130,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
         )}
       </div>
 
-      {/* ✅ Dropdown Menu */}
+      {/* Dropdown Menu */}
       {isDropdownVisible && (
         <div
           className="absolute z-50 w-full mt-4 bg-gray-900 bg-opacity-90 backdrop-blur-lg text-white rounded-lg shadow-lg max-h-80 overflow-y-auto border border-gray-700 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-700 scrollbar-thumb-rounded-lg"
@@ -145,7 +145,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
                   onClick={() => handleGameSelect(game.id)}
                   className="flex items-center gap-4 p-4 hover:bg-gray-800 cursor-pointer rounded-lg transition-all duration-200"
                 >
-                  {/* ✅ Defensive check for empty image */}
+                  {/* Defensive check for empty image */}
                   {game.imageUrl ? (
                     <img
                       src={game.imageUrl}

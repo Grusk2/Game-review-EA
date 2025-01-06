@@ -58,7 +58,7 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  /** ✅ Save Updated Display Name */
+  /** Save Updated Display Name */
   const handleUpdateDisplayName = async () => {
     if (!user || newDisplayName.trim() === "") {
       toast.error("Name cannot be empty.");
@@ -75,7 +75,7 @@ const ProfilePage = () => {
     }
   };
 
-  /** ✅ Add to Favorites */
+  /** Add to Favorites */
   const handleAddToFavorites = async (game: Game) => {
     if (!user) {
       toast.error("You need to be logged in to add a game to favorites.");
@@ -99,7 +99,7 @@ const ProfilePage = () => {
     }
   };
 
-  /** ✅ Remove from Favorites */
+  /** Remove from Favorites */
   const handleRemoveFromFavorites = async (gameId: string) => {
     if (!user) return;
     try {
@@ -121,7 +121,7 @@ const ProfilePage = () => {
     }
   };
 
-  /** ✅ Logout */
+  /** Logout */
   const handleLogout = async () => {
     try {
       await auth.signOut();
@@ -142,17 +142,17 @@ const ProfilePage = () => {
     );
   }
 
-  /** ✅ Return Section */
+  /** Return Section */
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 sm:p-10">
-      {/* ✅ Profile Header Section */}
+      {/* Profile Header Section */}
       <header className="flex flex-col sm:flex-row items-center justify-between bg-gray-800 p-6 rounded-lg shadow-md mb-10">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-2xl font-bold uppercase">
             {user.displayName?.charAt(0) || user.email?.charAt(0)}
           </div>
           <div>
-            {/* ✅ Name Section with Editable Input */}
+            {/* Name Section with Editable Input */}
             {isEditingName ? (
               <div className="flex items-center gap-2">
                 <input
@@ -173,7 +173,7 @@ const ProfilePage = () => {
                 <h1 className="text-2xl font-semibold">
                   {user.displayName || "User"}
                 </h1>
-                {/* ✅ Pencil Icon for Editing */}
+                {/* Pencil Icon for Editing */}
                 <button
                   onClick={() => setIsEditingName(true)}
                   className="text-white hover:text-blue-400 transition"
@@ -194,7 +194,7 @@ const ProfilePage = () => {
         </button>
       </header>
 
-      {/* ✅ Favorite Games Section */}
+      {/* Favorite Games Section */}
       <section className="mb-10">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Your Favorite Games</h2>
@@ -217,7 +217,7 @@ const ProfilePage = () => {
         )}
       </section>
 
-      {/* ✅ Search Modal Popup */}
+      {/* Search Modal Popup */}
       {isSearchOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-lg relative">
@@ -232,7 +232,7 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* ✅ Library Section */}
+      {/* Library Section */}
       <LibraryPage />
     </div>
   );

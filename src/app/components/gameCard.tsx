@@ -90,7 +90,7 @@ function GameCard({
   }, [game.id]);
 
   useEffect(() => {
-    /** ✅ Detect clicks outside the dropdown to close it */
+    /** Detect clicks outside the dropdown to close it */
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
@@ -110,7 +110,7 @@ function GameCard({
     return null;
   }
 
-  /** ✅ Add Game to Library or Favorites */
+  /** Add Game to Library or Favorites */
   const handleAddGame = async (collectionName: "library" | "favorites") => {
     if (!auth.currentUser) {
       toast.error("You need to be logged in to add a game.");
@@ -139,7 +139,7 @@ function GameCard({
     }
   };
 
-  /** ✅ Remove from Library or Favorites */
+  /** Remove from Library or Favorites */
   const handleRemoveGame = async (collectionName: "library" | "favorites") => {
     if (!auth.currentUser) return;
 
@@ -167,7 +167,7 @@ function GameCard({
 
   return (
     <div className="game-card bg-gray-800 rounded-lg overflow-hidden shadow-md flex flex-col relative">
-      {/* ✅ Three-dot menu with ref for click outside */}
+      {/* Three-dot menu with ref for click outside */}
       <div className="absolute top-2 right-2 z-10" ref={dropdownRef}>
         <button
           onClick={() => setMenuOpen((prev) => !prev)}
@@ -242,7 +242,7 @@ function GameCard({
         </div>
       </Link>
 
-      {/* ✅ Icons Based on Library and Favorite Status */}
+      {/* Icons Based on Library and Favorite Status */}
       <div className="absolute top-2 left-2 flex gap-2">
         {isAddedToLibrary && (
           <FontAwesomeIcon

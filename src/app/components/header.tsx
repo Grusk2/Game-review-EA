@@ -16,10 +16,10 @@ const Header = () => {
     user?.displayName || user?.email || "User"
   );
 
-  const dropdownRef = useRef<HTMLDivElement>(null); // ✅ Ref for dropdown container
+  const dropdownRef = useRef<HTMLDivElement>(null); // Ref for dropdown container
 
   useEffect(() => {
-    // ✅ Real-time Auth State Listener
+    // Real-time Auth State Listener
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsLoggedIn(!!currentUser);
@@ -28,11 +28,11 @@ const Header = () => {
       );
     });
 
-    // ✅ Cleanup the listener on component unmount
+    // Cleanup the listener on component unmount
     return () => unsubscribe();
   }, []);
 
-  /** ✅ Close Dropdown when Clicking Outside */
+  /** Close Dropdown when Clicking Outside */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -51,7 +51,7 @@ const Header = () => {
     };
   }, [dropdownOpen]);
 
-  /** ✅ Save Updated Display Name */
+  /** Save Updated Display Name */
   const handleUpdateDisplayName = async (newName: string) => {
     if (!user || newName.trim() === "") {
       toast.error("Name cannot be empty.");
@@ -69,7 +69,7 @@ const Header = () => {
     }
   };
 
-  /** ✅ Logout */
+  /** Logout */
   const handleLogout = async () => {
     try {
       await logOut();
@@ -111,7 +111,7 @@ const Header = () => {
           </>
         ) : (
           <div className="relative z-50" ref={dropdownRef}>
-            {/* ✅ Profile Picture Button */}
+            {/* Profile Picture Button */}
             <div
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="w-12 h-12 bg-blue-500 text-white flex items-center justify-center rounded-full cursor-pointer text-lg font-bold"
@@ -119,7 +119,7 @@ const Header = () => {
               {newDisplayName?.charAt(0).toUpperCase()}
             </div>
 
-            {/* ✅ Dropdown Content with Click Outside Handling */}
+            {/* Dropdown Content with Click Outside Handling */}
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg overflow-hidden z-50">
                 <Link href="/pages/profile">

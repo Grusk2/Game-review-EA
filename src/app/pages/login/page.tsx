@@ -15,7 +15,7 @@ const LoginPage = () => {
       await signIn(email, password);
       toast.success("Login Successful!");
 
-      // ✅ Using router.replace for a cleaner redirect
+      // Using router.replace for a cleaner redirect
       router.replace("/");
     } catch (error) {
       console.error(error);

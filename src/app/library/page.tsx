@@ -35,7 +35,7 @@ const LibraryPage = () => {
 
                 let libraryGames: Game[] = [];
 
-                // ✅ Fetch library and ensure proper structure
+                // Fetch library and ensure proper structure
                 unsubscribeLibrary = onSnapshot(libraryRef, (librarySnapshot) => {
                     libraryGames = librarySnapshot.docs.map((docSnap) => {
                         const data = docSnap.data() as FirestoreGame;
@@ -52,7 +52,7 @@ const LibraryPage = () => {
                     setGames([...libraryGames]);
                 });
 
-                // ✅ Fetch ratings and merge into the existing games array
+                // Fetch ratings and merge into the existing games array
                 unsubscribeRatings = onSnapshot(ratingsRef, (ratingsSnapshot) => {
                     const ratingsMap = new Map(
                         ratingsSnapshot.docs.map((doc) => [
@@ -61,7 +61,7 @@ const LibraryPage = () => {
                         ])
                     );
 
-                    // ✅ Update the games ensuring all fields exist
+                    // Update the games ensuring all fields exist
                     setGames((prevGames) =>
                         prevGames.map((game) => ({
                             ...game,
@@ -98,7 +98,7 @@ const LibraryPage = () => {
         };
     }, []);
 
-    // ✅ Grouping Logic Sorted from 5 Stars to Unrated
+    // Grouping Logic Sorted from 5 Stars to Unrated
     const groupedGames = {
         "5 Stars": games.filter((game) => game.rating === 5),
         "4 Stars": games.filter((game) => game.rating === 4),
@@ -108,7 +108,7 @@ const LibraryPage = () => {
         "Not Rated": games.filter((game) => game.rating === 0),
     };
 
-    // ✅ Bar Chart Data Preparation
+    // Bar Chart Data Preparation
     const ratingCounts = Object.fromEntries(
         Object.entries(groupedGames).map(([rating, games]) => [rating, games.length])
     );
@@ -153,12 +153,12 @@ const LibraryPage = () => {
         <div className="bg-gray-900 min-h-screen text-white p-6">
             <h2 className="text-3xl font-bold mb-8">Your Completed Games by Rating</h2>
 
-            {/* ✅ Bar Chart Section */}
+            {/* Bar Chart Section */}
             <div className="mb-10 w-[50%] h-[250px]">
                 <Bar data={chartData} options={chartOptions} />
             </div>
 
-            {/* ✅ Grouped Games Section - Proper Order */}
+            {/* Grouped Games Section - Proper Order */}
             {Object.entries(groupedGames).map(([rating, games]) => (
                 <section key={rating} className="mb-10">
                     <h3 className="text-2xl font-semibold mb-4">{rating}</h3>
