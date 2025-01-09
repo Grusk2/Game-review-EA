@@ -7,7 +7,6 @@ import {
   doc,
   setDoc,
   getDocs,
-  deleteDoc,
   query,
 } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";

@@ -2,10 +2,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../../utils/firebase";
-import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { auth } from "../../utils/firebase";
 import StarRating from "../../components/starRating";
-import toast from "react-hot-toast";
 import Image from "next/image";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
@@ -24,8 +22,6 @@ const GameDetails = () => {
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState<string | null>(null);
     const [showFullDescription, setShowFullDescription] = useState(false);
-    const [isAddedToLibrary, setIsAddedToLibrary] = useState(false);
-    const [isAddedToFavorites, setIsAddedToFavorites] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -48,17 +44,6 @@ const GameDetails = () => {
 
                 const data: RawgGameDetails = await response.json();
                 setGame(data);
-
-                if (userId) {
-                    const libraryRef = doc(db, "users", userId, "library", id);
-                    const favoritesRef = doc(db, "users", userId, "favorites", id);
-                    const [librarySnap, favoritesSnap] = await Promise.all([
-                        getDoc(libraryRef),
-                        getDoc(favoritesRef),
-                    ]);
-                    setIsAddedToLibrary(librarySnap.exists());
-                    setIsAddedToFavorites(favoritesSnap.exists());
-                }
             } catch (error) {
                 console.error("Error fetching game details:", error);
             } finally {
@@ -67,45 +52,10 @@ const GameDetails = () => {
         };
 
         fetchGameDetails();
-    }, [id, userId]);
+    }, [id]);
 
     const toggleDescription = () => {
         setShowFullDescription((prev) => !prev);
-    };
-
-    const handleAddGame = async (collectionName: "library" | "favorites") => {
-        if (!userId || !game) {
-            toast.error("You need to be logged in to add a game.");
-            return;
-        }
-
-        try {
-            const gameRef = doc(db, "users", userId, collectionName, id);
-            await setDoc(gameRef, game);
-            collectionName === "library"
-                ? setIsAddedToLibrary(true)
-                : setIsAddedToFavorites(true);
-            toast.success(`${game.name} added to ${collectionName}!`);
-        } catch (error) {
-            console.error("Error adding game:", error);
-            toast.error(`Failed to add to ${collectionName}.`);
-        }
-    };
-
-    const handleRemoveGame = async (collectionName: "library" | "favorites") => {
-        if (!userId) return;
-
-        try {
-            const gameRef = doc(db, "users", userId, collectionName, id);
-            await deleteDoc(gameRef);
-            collectionName === "library"
-                ? setIsAddedToLibrary(false)
-                : setIsAddedToFavorites(false);
-            toast.success(`Removed from ${collectionName}`);
-        } catch (error) {
-            console.error("Error removing game:", error);
-            toast.error(`Failed to remove from ${collectionName}`);
-        }
     };
 
     if (loading) return <div className="text-center py-10 text-white">Loading...</div>;

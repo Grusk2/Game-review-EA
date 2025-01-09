@@ -125,9 +125,12 @@ function GameCard({
       );
       await setDoc(gameRef, game);
       toast.success(`${game.title} added to your ${collectionName}!`);
-      collectionName === "library"
-        ? setIsAddedToLibrary(true)
-        : setIsAddedToFavorites(true);
+
+      if (collectionName === "library") {
+        setIsAddedToLibrary(true);
+      } else {
+        setIsAddedToFavorites(true);
+      }
     } catch (error) {
       console.error("Error adding game:", error);
       toast.error(`Failed to add to ${collectionName}.`);
@@ -150,9 +153,12 @@ function GameCard({
       );
       await deleteDoc(gameRef);
       toast.success(`Removed from ${collectionName}`);
-      collectionName === "library"
-        ? setIsAddedToLibrary(false)
-        : setIsAddedToFavorites(false);
+
+      if (collectionName === "library") {
+        setIsAddedToLibrary(false);
+      } else {
+        setIsAddedToFavorites(false);
+      }
     } catch (error) {
       console.error("Error removing game:", error);
       toast.error(`Failed to remove from ${collectionName}`);
