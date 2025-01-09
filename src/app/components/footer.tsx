@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function Footer() {
   return (
     <footer className="bg-black text-white py-4 px-8">
@@ -9,7 +11,8 @@ export default function Footer() {
         <div>
           <ul>
             <div className="flex">
-              <img src="/GameLens.png" alt="Logo" className="h-10" />
+              <Image src="/GameLens.png" alt="Logo"    width={300} 
+   height={200} className="h-10 w-12" />
             </div>
           </ul>
         </div>

@@ -7,6 +7,7 @@ import { db, auth } from "../utils/firebase";
 import toast from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faCheckCircle, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
+import Image from "next/image";
 
 interface Game {
   id: number;
@@ -19,7 +20,6 @@ interface Game {
 
 function GameCard({
   game,
-  onAddToLibrary,
 }: {
   game: Game;
   onAddToLibrary: (game: Game) => void;
@@ -29,7 +29,7 @@ function GameCard({
   const [isAddedToLibrary, setIsAddedToLibrary] = useState(false);
   const [isAddedToFavorites, setIsAddedToFavorites] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null); // ✅ Ref for dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -90,7 +90,6 @@ function GameCard({
   }, [game.id]);
 
   useEffect(() => {
-    /** Detect clicks outside the dropdown to close it */
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
@@ -110,16 +109,11 @@ function GameCard({
     return null;
   }
 
-  /** Add Game to Library or Favorites */
   const handleAddGame = async (collectionName: "library" | "favorites") => {
     if (!auth.currentUser) {
       toast.error("You need to be logged in to add a game.");
       return;
     }
-
-    collectionName === "library"
-      ? setIsAddedToLibrary(true)
-      : setIsAddedToFavorites(true);
 
     try {
       const gameRef = doc(
@@ -131,21 +125,20 @@ function GameCard({
       );
       await setDoc(gameRef, game);
       toast.success(`${game.title} added to your ${collectionName}!`);
-    } catch (error) {
-      toast.error(`Failed to add to ${collectionName}.`);
       collectionName === "library"
-        ? setIsAddedToLibrary(false)
-        : setIsAddedToFavorites(false);
+        ? setIsAddedToLibrary(true)
+        : setIsAddedToFavorites(true);
+    } catch (error) {
+      console.error("Error adding game:", error);
+      toast.error(`Failed to add to ${collectionName}.`);
     }
   };
 
-  /** Remove from Library or Favorites */
   const handleRemoveGame = async (collectionName: "library" | "favorites") => {
-    if (!auth.currentUser) return;
-
-    collectionName === "library"
-      ? setIsAddedToLibrary(false)
-      : setIsAddedToFavorites(false);
+    if (!auth.currentUser) {
+      toast.error("You need to be logged in to remove a game.");
+      return;
+    }
 
     try {
       const gameRef = doc(
@@ -157,17 +150,36 @@ function GameCard({
       );
       await deleteDoc(gameRef);
       toast.success(`Removed from ${collectionName}`);
-    } catch (error) {
-      toast.error(`Failed to remove from ${collectionName}`);
       collectionName === "library"
-        ? setIsAddedToLibrary(true)
-        : setIsAddedToFavorites(true);
+        ? setIsAddedToLibrary(false)
+        : setIsAddedToFavorites(false);
+    } catch (error) {
+      console.error("Error removing game:", error);
+      toast.error(`Failed to remove from ${collectionName}`);
     }
   };
 
   return (
     <div className="game-card bg-gray-800 rounded-lg overflow-hidden shadow-md flex flex-col relative">
-      {/* Three-dot menu with ref for click outside */}
+      {/* Top Left Indicators for Library & Favorites */}
+      <div className="absolute top-2 left-2 flex gap-2 z-10">
+        {isAddedToLibrary && (
+          <FontAwesomeIcon
+            icon={faCheckCircle}
+            className="text-green-500 text-xl"
+            title="In Library"
+          />
+        )}
+        {isAddedToFavorites && (
+          <FontAwesomeIcon
+            icon={faStar}
+            className="text-yellow-500 text-xl"
+            title="Favorite"
+          />
+        )}
+      </div>
+
+      {/* Three-dot menu for Actions */}
       <div className="absolute top-2 right-2 z-10" ref={dropdownRef}>
         <button
           onClick={() => setMenuOpen((prev) => !prev)}
@@ -177,7 +189,6 @@ function GameCard({
         </button>
         {menuOpen && (
           <div className="absolute right-0 mt-2 w-36 bg-gray-900 rounded-md shadow-lg z-20">
-            {/* Library Actions */}
             {isAddedToLibrary ? (
               <button
                 onClick={() => handleRemoveGame("library")}
@@ -193,8 +204,6 @@ function GameCard({
                 Add to Library
               </button>
             )}
-
-            {/* Favorite Actions */}
             {isAddedToFavorites ? (
               <button
                 onClick={() => handleRemoveGame("favorites")}
@@ -214,19 +223,20 @@ function GameCard({
         )}
       </div>
 
-      {/* Card Content */}
+      {/* Game Content */}
       <Link href={`/game/${game.id}`}>
-        <img
+        <Image
           src={game.imageUrl}
           alt={game.title}
-          className="h-48 w-full object-cover object-top"
+          width={400}
+          height={300}
+          objectFit="cover"
+          className="w-full"
         />
-        <div className="p-4 flex-grow">
-          <h2 className="text-lg font-bold text-white mb-6 truncate">
-            {game.title}
-          </h2>
+        <div className="p-4">
+          <h2 className="text-lg font-bold text-white">{game.title}</h2>
           <p className="text-sm text-green-400 font-semibold">
-            {Array.from({ length: 5 }, (_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <span
                 key={i}
                 className={`text-xl ${
@@ -235,30 +245,12 @@ function GameCard({
                     : "text-gray-400"
                 }`}
               >
-                {i < (userRating ?? game.rating) ? "★" : "★"}
+                ★
               </span>
             ))}
           </p>
         </div>
       </Link>
-
-      {/* Icons Based on Library and Favorite Status */}
-      <div className="absolute top-2 left-2 flex gap-2">
-        {isAddedToLibrary && (
-          <FontAwesomeIcon
-            icon={faCheckCircle}
-            className="text-green-500 text-xl"
-            title="In Library"
-          />
-        )}
-        {isAddedToFavorites && (
-          <FontAwesomeIcon
-            icon={faStar}
-            className="text-yellow-500 text-xl"
-            title="Favorite"
-          />
-        )}
-      </div>
     </div>
   );
 }

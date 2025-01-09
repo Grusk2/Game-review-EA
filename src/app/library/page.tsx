@@ -22,7 +22,7 @@ Chart.register(...registerables);
 const LibraryPage = () => {
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
-    const [userId, setUserId] = useState<string | null>(null);
+    const [, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
         let unsubscribeLibrary: () => void = () => {};

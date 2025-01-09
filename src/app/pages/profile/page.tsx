@@ -99,27 +99,6 @@ const ProfilePage = () => {
     }
   };
 
-  /** Remove from Favorites */
-  const handleRemoveFromFavorites = async (gameId: string) => {
-    if (!user) return;
-    try {
-      const favoriteRef = doc(
-        db,
-        "users",
-        user.uid,
-        "favorites",
-        gameId.toString()
-      );
-      await deleteDoc(favoriteRef);
-      setFavoriteGames((prevGames) =>
-        prevGames.filter((game) => game.id.toString() !== gameId)
-      );
-      toast.success("Game removed from favorites.");
-    } catch (error) {
-      console.error("Error removing game from favorites:", error);
-      toast.error("Failed to remove game.");
-    }
-  };
 
   /** Logout */
   const handleLogout = async () => {

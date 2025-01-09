@@ -1,10 +1,17 @@
 "use client";
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 interface Category {
   id: number;
   name: string;
   imageUrl: string;
+}
+
+interface RawgCategoryResponse {
+  id: number;
+  name: string;
+  image_background?: string;
 }
 
 interface CategoriesProps {
@@ -25,11 +32,13 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
 
         const data = await response.json();
 
-        const formattedCategories = data.results.map((category: any) => ({
+        const formattedCategories: Category[] = data.results.map((category: RawgCategoryResponse) => ({
           id: category.id,
           name: category.name,
           imageUrl: category.image_background || "/placeholder.jpg",
-        }));
+      }));
+      
+        
 
         setCategories(formattedCategories);
         setIsLoading(false);
@@ -72,9 +81,11 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
                   selectedCategory === category.id ? "border-blue-500" : ""
                 }`}
               >
-                <img
+                <Image
                   src={category.imageUrl}
                   alt={category.name}
+                  width={300} 
+                  height={200} 
                   className="w-full h-full object-cover"
                 />
                 <p className="absolute bottom-2 left-0 right-0 text-center text-white text-xs font-semibold bg-black bg-opacity-70">
@@ -94,9 +105,11 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
                   selectedCategory === category.id ? "border-4 border-blue-500" : "border border-gray-600"
                 }`}
               >
-                <img
+                <Image
                   src={category.imageUrl}
                   alt={category.name}
+                  width={300} 
+                  height={200} 
                   className="w-full h-[120px] object-cover"
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
