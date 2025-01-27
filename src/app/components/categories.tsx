@@ -83,7 +83,7 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
               >
                 <Image
                   src={category.imageUrl}
-                  alt={category.name}
+                  alt={`Image representing ${category.name}`}
                   width={300} 
                   height={200} 
                   className="w-full h-full object-cover"
@@ -107,15 +107,15 @@ const Categories: React.FC<CategoriesProps> = ({ onCategorySelect }) => {
               >
                 <Image
                   src={category.imageUrl}
-                  alt={category.name}
+                  alt={`Image representing ${category.name}`}
                   width={300} 
                   height={200} 
                   className="w-full h-[120px] object-cover"
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                  <h3 className="text-center text-white text-lg font-semibold drop-shadow-lg">
+                  <h2 className="text-center text-white text-lg font-semibold drop-shadow-lg">
                     {category.name}
-                  </h3>
+                  </h2>
                 </div>
               </div>
             ))}

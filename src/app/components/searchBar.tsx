@@ -123,6 +123,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onAddToFavorites }) => {
                     placeholder="Search for a game..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label="Search for a game"
                     className="flex-1 px-4 py-2 text-white bg-transparent outline-none placeholder-gray-400"
                 />
                 {searchQuery && (

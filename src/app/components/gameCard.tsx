@@ -125,9 +125,12 @@ function GameCard({
       );
       await setDoc(gameRef, game);
       toast.success(`${game.title} added to your ${collectionName}!`);
-      collectionName === "library"
-        ? setIsAddedToLibrary(true)
-        : setIsAddedToFavorites(true);
+
+      if (collectionName === "library") {
+        setIsAddedToLibrary(true);
+      } else {
+        setIsAddedToFavorites(true);
+      }
     } catch (error) {
       console.error("Error adding game:", error);
       toast.error(`Failed to add to ${collectionName}.`);
@@ -150,9 +153,12 @@ function GameCard({
       );
       await deleteDoc(gameRef);
       toast.success(`Removed from ${collectionName}`);
-      collectionName === "library"
-        ? setIsAddedToLibrary(false)
-        : setIsAddedToFavorites(false);
+
+      if (collectionName === "library") {
+        setIsAddedToLibrary(false);
+      } else {
+        setIsAddedToFavorites(false);
+      }
     } catch (error) {
       console.error("Error removing game:", error);
       toast.error(`Failed to remove from ${collectionName}`);
@@ -184,6 +190,7 @@ function GameCard({
         <button
           onClick={() => setMenuOpen((prev) => !prev)}
           className="text-white text-lg focus:outline-none"
+          aria-label="Open menu"
         >
           <FontAwesomeIcon icon={faEllipsisV} />
         </button>
@@ -227,11 +234,10 @@ function GameCard({
       <Link href={`/game/${game.id}`}>
         <Image
           src={game.imageUrl}
-          alt={game.title}
+          alt={`representing ${game.title}`}
           width={400}
           height={300}
-          objectFit="cover"
-          className="w-full"
+          className="w-full object-cover object-top"
         />
         <div className="p-4">
           <h2 className="text-lg font-bold text-white">{game.title}</h2>

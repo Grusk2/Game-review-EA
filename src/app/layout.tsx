@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Header from "./components/header"
 import { Toaster } from 'react-hot-toast';
 import Footer from "./components/footer"
-import localFont from "next/font/local";
 import "./globals.css";
 
 

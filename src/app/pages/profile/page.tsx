@@ -7,7 +7,6 @@ import {
   doc,
   setDoc,
   getDocs,
-  deleteDoc,
   query,
 } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
@@ -167,7 +166,7 @@ const ProfilePage = () => {
         </div>
         <button
           onClick={handleLogout}
-          className="mt-4 sm:mt-0 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
+          className="mt-4 sm:mt-0 px-4 py-2 bg-red-700 hover:bg-red-900 text-white rounded-md"
         >
           Log Out
         </button>

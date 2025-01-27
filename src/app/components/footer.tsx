@@ -11,8 +11,13 @@ export default function Footer() {
         <div>
           <ul>
             <div className="flex">
-              <Image src="/GameLens.png" alt="Logo"    width={300} 
-   height={200} className="h-10 w-12" />
+              <Image
+                src="/GameLens.png"
+                alt="Gamelens footer Logo"
+                width={300}
+                height={200}
+                className="h-10 w-12"
+              />
             </div>
           </ul>
         </div>
